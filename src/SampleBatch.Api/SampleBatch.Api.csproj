@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+    <LangVersion>Latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="5.5.4" />
+    <PackageReference Include="MassTransit.Extensions.Logging" Version="5.5.4" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="5.5.4" />
+    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="5.5.4" />
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
+    <PackageReference Include="NSwag.AspNetCore" Version="13.0.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SampleBatch.Contracts\SampleBatch.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

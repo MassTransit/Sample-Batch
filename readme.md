@@ -29,6 +29,8 @@ You might want to try:
 - cancel a delayed batch, before it starts
 - cancel a delayed batch, after it starts
 
+When you are all done, run `docker-compose down`
+
 ## Comments ##
 
 My hope is to grow this sample over time, and introduce more documentation that walks through some of the decisions for example:
@@ -39,3 +41,4 @@ My hope is to grow this sample over time, and introduce more documentation that 
 - The Sample allows RabbitMq or AzureSb to be used. All you do is add the config for the one you want, and on startup it will try to connect to the message broker that has config values present.
 - I'd like to perhaps expand the db to create an actual orderId entity, where the Cancel and Suspend Activities would actually use a DBContext and cancel them. Also maybe introduce a couple routing slip activities in sequence, to then show compensation.
 - Not too sure how I feel about the enum indicating what batch action to take, and then the switch statement in the ProcessJobConsumer where it conditionally creates the routingslip activity. Is there a more elegant way? I'll need to think about that.
+- I'd like to add quartz scheduler with persistence to the sample.

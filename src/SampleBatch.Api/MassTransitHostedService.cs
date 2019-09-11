@@ -22,7 +22,7 @@ namespace SampleBatch.Api
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            await _bus.StartAsync(cancellationToken).ConfigureAwait(false);
+            await _bus.StartAsync(cancellationToken);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

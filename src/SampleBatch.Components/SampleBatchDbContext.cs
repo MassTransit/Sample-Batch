@@ -8,7 +8,7 @@ namespace SampleBatch.Components
 {
     public class SampleBatchDbContext : DbContext
     {
-        public SampleBatchDbContext(DbContextOptions<SampleBatchDbContext> options)
+        public SampleBatchDbContext(DbContextOptions options)
             : base(options)
         {
         }

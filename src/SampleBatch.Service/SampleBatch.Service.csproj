@@ -17,13 +17,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="5.5.4" />
-    <PackageReference Include="MassTransit.Automatonymous.Extensions.DependencyInjection" Version="5.5.4" />
-    <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="5.5.4" />
-    <PackageReference Include="MassTransit.Extensions.Logging" Version="5.5.4" />
-    <PackageReference Include="MassTransit.Quartz" Version="5.5.4" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="5.5.4" />
-    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="5.5.4" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="5.5.6" />
+    <PackageReference Include="MassTransit.Automatonymous.Extensions.DependencyInjection" Version="5.5.6" />
+    <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="5.5.6" />
+    <PackageReference Include="MassTransit.Extensions.Logging" Version="5.5.6" />
+    <PackageReference Include="MassTransit.Quartz" Version="5.5.6" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="5.5.6" />
+    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="5.5.6" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.2.0" />

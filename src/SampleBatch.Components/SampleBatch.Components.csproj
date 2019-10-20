@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit.Automatonymous" Version="5.5.4" />
-    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="5.5.4" />
+    <PackageReference Include="MassTransit.Automatonymous" Version="5.5.6" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="5.5.6" />
   </ItemGroup>
 
   <ItemGroup>

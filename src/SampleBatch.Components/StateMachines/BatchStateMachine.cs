@@ -162,7 +162,7 @@ namespace SampleBatch.Components.StateMachines
         {
 
             sagaConfigurator.UseMessageRetry(r => r.Immediate(5));
-            //sagaConfigurator.UseInMemoryOutbox(); // Don't use this because of scheduling, until https://github.com/MassTransit/MassTransit/issues/1550 is fixed
+            sagaConfigurator.UseInMemoryOutbox();
         }
     }
 }

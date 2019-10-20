@@ -102,7 +102,7 @@ namespace SampleBatch.Components.StateMachines
         {
 
             sagaConfigurator.UseMessageRetry(r => r.Immediate(5));
-            //sagaConfigurator.UseInMemoryOutbox();
+            sagaConfigurator.UseInMemoryOutbox();
         }
     }
 }

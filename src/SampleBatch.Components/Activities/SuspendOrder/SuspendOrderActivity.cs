@@ -9,7 +9,7 @@ using MassTransit.Courier.Exceptions;
 
 namespace SampleBatch.Components.Activities.SuspendOrder
 {
-    public class SuspendOrderActivity : ExecuteActivity<SuspendOrderArguments>
+    public class SuspendOrderActivity : IExecuteActivity<SuspendOrderArguments>
     {
         private ILogger _logger;
 

@@ -47,23 +47,22 @@ namespace SampleBatch.Service
                     services.AddMassTransit(cfg =>
                     {
                         cfg.AddConsumersFromNamespaceContaining<ConsumerAnchor>();
-                        cfg.AddSagaStateMachinesFromNamespaceContaining<StateMachineAnchor>();
+                        cfg.AddSagaStateMachinesFromNamespaceContaining(typeof(StateMachineAnchor));
                         cfg.AddActivitiesFromNamespaceContaining<ActivitiesAnchor>();
                         cfg.AddBus(ConfigureBus);
                     });
 
                     services.AddDbContext<DbContext, SampleBatchDbContext>(x => x.UseSqlServer(hostContext.Configuration.GetConnectionString("sample-batch")));
 
-                    services.AddSingleton(typeof(ISagaDbContextFactory<BatchState>), typeof(SagaScopedDbConnectionFactory<BatchState>));
-                    services.AddSingleton(typeof(ISagaDbContextFactory<JobState>), typeof(SagaScopedDbConnectionFactory<JobState>));
+                    services.AddSingleton(typeof(ISagaDbContextFactory), typeof(SagaScopedDbConnectionFactory));
                     
                     // I specified the MsSqlLockStatements because in my State Entities EFCore EntityConfigurations, I changed the column name from CorrelationId, to "BatchId" and "BatchJobId"
                     // Otherwise I could just use the default, which are "... WHERE CorrelationId = @p0"
-                    services.AddSingleton<ISagaRepository<BatchState>>(x => EntityFrameworkSagaRepository<BatchState>.CreatePessimistic(x.GetRequiredService<ISagaDbContextFactory<BatchState>>(), new MsSqlLockStatements(rowLockStatement: "select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchId = @p0")));
-                    services.AddSingleton<ISagaRepository<JobState>>(x => EntityFrameworkSagaRepository<JobState>.CreatePessimistic(x.GetRequiredService<ISagaDbContextFactory<JobState>>(), new MsSqlLockStatements(rowLockStatement: "select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchJobId = @p0")));
+                    services.AddSingleton<ISagaRepository<BatchState>>(x => EntityFrameworkSagaRepository<BatchState>.CreatePessimistic(x.GetRequiredService<ISagaDbContextFactory>(), new MsSqlLockStatements(rowLockStatement: "select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchId = @p0")));
+                    services.AddSingleton<ISagaRepository<JobState>>(x => EntityFrameworkSagaRepository<JobState>.CreatePessimistic(x.GetRequiredService<ISagaDbContextFactory>(), new MsSqlLockStatements(rowLockStatement: "select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchJobId = @p0")));
 
-                    services.AddSingleton<IHostedService, MassTransitConsoleHostedService>();
-                    services.AddSingleton<IHostedService, EfDbCreatedHostedService>(); // So we don't need to use ef migrations for this sample. Likely if you are going to deploy to a production environment, you want a better DB deploy strategy.
+                    services.AddHostedService<MassTransitConsoleHostedService>();
+                    services.AddHostedService<EfDbCreatedHostedService>(); // So we don't need to use ef migrations for this sample. Likely if you are going to deploy to a production environment, you want a better DB deploy strategy.
                 })
                 .ConfigureLogging((hostingContext, logging) =>
                 {
@@ -73,7 +72,7 @@ namespace SampleBatch.Service
 
             if (isService)
             {
-                await builder.RunAsServiceAsync();
+                await builder.UseWindowsService().Build().RunAsync();
             }
             else
             {
@@ -106,9 +105,9 @@ namespace SampleBatch.Service
                     h.Username(appConfig.RabbitMq.Username);
                     h.Password(appConfig.RabbitMq.Password);
                 });
-
+                
                 var endpointNameFormatter = new KebabCaseEndpointNameFormatter();
-
+                
                 EndpointConvention.Map<ProcessBatchJob>(host.Settings.HostAddress.GetDestinationAddress(endpointNameFormatter.Consumer<ProcessBatchJobConsumer>()));
 
                 cfg.UseInMemoryScheduler();

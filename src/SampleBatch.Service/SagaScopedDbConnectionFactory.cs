@@ -7,9 +7,8 @@ using System;
 
 namespace SampleBatch.Service
 {
-    public class SagaScopedDbConnectionFactory<TSaga> :
-    ISagaDbContextFactory<TSaga>
-    where TSaga : class, ISaga
+    public class SagaScopedDbConnectionFactory :
+    ISagaDbContextFactory
     {
         public SagaScopedDbConnectionFactory()
         {

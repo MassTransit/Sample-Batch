@@ -6,7 +6,7 @@ using MassTransit.Courier.Exceptions;
 
 namespace SampleBatch.Components.Activities.CancelOrder
 {
-    public class CancelOrderActivity : ExecuteActivity<CancelOrderArguments>
+    public class CancelOrderActivity : IExecuteActivity<CancelOrderArguments>
     {
         private ILogger _logger;
 

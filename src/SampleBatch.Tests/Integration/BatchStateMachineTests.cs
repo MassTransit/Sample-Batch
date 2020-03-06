@@ -1,12 +1,10 @@
 ﻿using FluentAssertions;
 using MassTransit;
-using MassTransit.EntityFrameworkCoreIntegration;
 using MassTransit.EntityFrameworkCoreIntegration.Saga;
 using MassTransit.Initializers;
 using MassTransit.Saga;
 using MassTransit.Testing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using SampleBatch.Components;
 using SampleBatch.Components.StateMachines;
 using SampleBatch.Contracts;
@@ -15,7 +13,6 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace SampleBatch.Tests.Integration
 {
@@ -47,7 +44,7 @@ namespace SampleBatch.Tests.Integration
                 db.Database.EnsureCreated();
             }
 
-            _sagaRepository = EntityFrameworkSagaRepository<BatchState>.CreatePessimistic(_dbContextFactory, new MsSqlLockStatements(rowLockStatement: "select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchId = @p0"));
+            _sagaRepository = EntityFrameworkSagaRepository<BatchState>.CreatePessimistic(_dbContextFactory, new CustomSqlLockStatementProvider("select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchId = @p0"));
             _stateMachine = new BatchStateMachine();
 
             _inMemoryTestHarness = new InMemoryTestHarness();
@@ -91,7 +88,7 @@ namespace SampleBatch.Tests.Integration
 
             await _inMemoryTestHarness.InputQueueSendEndpoint.Send(message);
 
-            var sagaId = await _sagaRepository.ShouldContainSagaInState(message.BatchId, _stateMachine, x => x.Started, _inMemoryTestHarness.TestTimeout);
+            var sagaId = await _sagaRepository.ShouldContainSaga(x => x.CorrelationId == message.BatchId && x.CurrentState == _stateMachine.Started.Name, _inMemoryTestHarness.TestTimeout);
 
             using (var dbContext = _dbContextFactory())
             {
@@ -120,7 +117,7 @@ namespace SampleBatch.Tests.Integration
             await _inMemoryTestHarness.Bus.Publish(doneJob1);
             await _inMemoryTestHarness.Bus.Publish(doneJob2);
 
-            sagaId = await _sagaRepository.ShouldContainSagaInState(message.BatchId, _stateMachine, x => x.Finished, _inMemoryTestHarness.TestTimeout);
+            sagaId = await _sagaRepository.ShouldContainSaga(x => x.CorrelationId == message.BatchId && x.CurrentState == _stateMachine.Finished.Name, _inMemoryTestHarness.TestTimeout);
 
             using (var dbContext = _dbContextFactory())
             {

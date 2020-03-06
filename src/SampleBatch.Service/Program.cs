@@ -1,8 +1,6 @@
 ﻿using MassTransit;
 using MassTransit.Definition;
 using MassTransit.EntityFrameworkCoreIntegration;
-using MassTransit.EntityFrameworkCoreIntegration.Saga;
-using MassTransit.Saga;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,20 +44,43 @@ namespace SampleBatch.Service
 
                     services.AddMassTransit(cfg =>
                     {
+                        cfg.AddSagaStateMachine<BatchStateMachine, BatchState>(typeof(BatchStateMachineDefinition))
+                        .EntityFrameworkRepository(r =>
+                        {
+                            r.ConcurrencyMode = ConcurrencyMode.Pessimistic;
+
+                            r.AddDbContext<DbContext, SampleBatchDbContext>((provider, builder) =>
+                            {
+                                builder.UseSqlServer(hostContext.Configuration.GetConnectionString("sample-batch"));
+                            });
+
+                            // I specified the MsSqlLockStatements because in my State Entities EFCore EntityConfigurations, I changed the column name from CorrelationId, to "BatchId" and "BatchJobId"
+                            // Otherwise I could just use r.UseSqlServer(), which uses the default, which are "... WHERE CorrelationId = @p0"
+                            r.LockStatementProvider = new CustomSqlLockStatementProvider("select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchId = @p0");
+                        });
+
+                        cfg.AddSagaStateMachine<JobStateMachine, JobState>(typeof(JobStateMachineDefinition))
+                        .EntityFrameworkRepository(r =>
+                        {
+                            r.ConcurrencyMode = ConcurrencyMode.Pessimistic;
+
+                            r.AddDbContext<DbContext, SampleBatchDbContext>((provider, builder) =>
+                            {
+                                builder.UseSqlServer(hostContext.Configuration.GetConnectionString("sample-batch"));
+                            });
+
+                            // I specified the MsSqlLockStatements because in my State Entities EFCore EntityConfigurations, I changed the column name from CorrelationId, to "BatchId" and "BatchJobId"
+                            // Otherwise I could just use r.UseSqlServer(), which uses the default, which are "... WHERE CorrelationId = @p0"
+                            r.LockStatementProvider = new CustomSqlLockStatementProvider("select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchJobId = @p0");
+                        });
+
                         cfg.AddConsumersFromNamespaceContaining<ConsumerAnchor>();
-                        cfg.AddSagaStateMachinesFromNamespaceContaining(typeof(StateMachineAnchor));
+
                         cfg.AddActivitiesFromNamespaceContaining<ActivitiesAnchor>();
                         cfg.AddBus(ConfigureBus);
                     });
 
                     services.AddDbContext<DbContext, SampleBatchDbContext>(x => x.UseSqlServer(hostContext.Configuration.GetConnectionString("sample-batch")));
-
-                    services.AddSingleton(typeof(ISagaDbContextFactory), typeof(SagaScopedDbConnectionFactory));
-                    
-                    // I specified the MsSqlLockStatements because in my State Entities EFCore EntityConfigurations, I changed the column name from CorrelationId, to "BatchId" and "BatchJobId"
-                    // Otherwise I could just use the default, which are "... WHERE CorrelationId = @p0"
-                    services.AddSingleton<ISagaRepository<BatchState>>(x => EntityFrameworkSagaRepository<BatchState>.CreatePessimistic(x.GetRequiredService<ISagaDbContextFactory>(), new MsSqlLockStatements(rowLockStatement: "select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchId = @p0")));
-                    services.AddSingleton<ISagaRepository<JobState>>(x => EntityFrameworkSagaRepository<JobState>.CreatePessimistic(x.GetRequiredService<ISagaDbContextFactory>(), new MsSqlLockStatements(rowLockStatement: "select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchJobId = @p0")));
 
                     services.AddHostedService<MassTransitConsoleHostedService>();
                     services.AddHostedService<EfDbCreatedHostedService>(); // So we don't need to use ef migrations for this sample. Likely if you are going to deploy to a production environment, you want a better DB deploy strategy.

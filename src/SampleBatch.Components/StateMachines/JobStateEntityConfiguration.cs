@@ -1,12 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using SampleBatch.Contracts.Enums;
-using System;
-
-namespace SampleBatch.Components.StateMachines
+﻿namespace SampleBatch.Components.StateMachines
 {
-    class JobStateEntityConfiguration : IEntityTypeConfiguration<JobState>
+    using Contracts.Enums;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.EntityFrameworkCore.Metadata.Builders;
+    using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+
+    class JobStateEntityConfiguration :
+        IEntityTypeConfiguration<JobState>
     {
         public void Configure(EntityTypeBuilder<JobState> builder)
         {

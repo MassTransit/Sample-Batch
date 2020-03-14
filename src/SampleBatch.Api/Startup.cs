@@ -1,5 +1,6 @@
 ﻿using System;
 using MassTransit;
+using MassTransit.AspNetCoreIntegration;
 using MassTransit.Azure.ServiceBus.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -9,8 +10,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using SampleBatch.Contracts;
 
+
 namespace SampleBatch.Api
 {
+    using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+
+
     public class Startup
     {
         public Startup(IConfiguration configuration)
@@ -23,19 +28,18 @@ namespace SampleBatch.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHealthChecks();
             services.AddMvc();
 
             services.Configure<AppConfig>(options => Configuration.GetSection("AppConfig").Bind(options));
 
-            services.AddMassTransit(cfg =>
+            services.AddMassTransit(ConfigureBus, cfg =>
             {
-                cfg.AddBus(ConfigureBus);
                 cfg.AddRequestClient<SubmitBatch>();
+                cfg.AddRequestClient<BatchStatusRequested>();
             });
 
             services.AddOpenApiDocument(cfg => cfg.PostProcess = d => d.Info.Title = "Sample-Batch");
-
-            services.AddSingleton<IHostedService, MassTransitHostedService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -51,6 +55,8 @@ namespace SampleBatch.Api
             app.UseOpenApi(); // serve OpenAPI/Swagger documents
             app.UseSwaggerUi3(); // serve Swagger UI
 
+            app.UseHealthChecks("/health", new HealthCheckOptions {Predicate = check => check.Tags.Contains("ready")});
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
@@ -65,7 +71,8 @@ namespace SampleBatch.Api
             {
                 return ConfigureAzureSb(provider, appSettings);
             }
-            else if (appSettings.RabbitMq != null)
+
+            if (appSettings.RabbitMq != null)
             {
                 return ConfigureRabbitMqBus(provider, appSettings);
             }
@@ -77,7 +84,7 @@ namespace SampleBatch.Api
         {
             return Bus.Factory.CreateUsingRabbitMq(cfg =>
             {
-                var host = cfg.Host(appConfig.RabbitMq.HostAddress, appConfig.RabbitMq.VirtualHost, h =>
+                cfg.Host(appConfig.RabbitMq.HostAddress, appConfig.RabbitMq.VirtualHost, h =>
                 {
                     h.Username(appConfig.RabbitMq.Username);
                     h.Password(appConfig.RabbitMq.Password);
@@ -91,7 +98,7 @@ namespace SampleBatch.Api
         {
             return Bus.Factory.CreateUsingAzureServiceBus(cfg =>
             {
-                var host = cfg.Host(appConfig.AzureServiceBus.ConnectionString, h => { });
+                cfg.Host(appConfig.AzureServiceBus.ConnectionString);
 
                 cfg.ConfigureEndpoints(provider);
             });

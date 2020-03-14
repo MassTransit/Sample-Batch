@@ -1,15 +1,12 @@
-﻿using MassTransit;
-using MassTransit.Definition;
-using Microsoft.Extensions.Logging;
-using SampleBatch.Contracts;
-using SampleBatch.Contracts.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SampleBatch.Components.Consumers
+﻿namespace SampleBatch.Components.Consumers
 {
+    using System.Threading.Tasks;
+    using Contracts;
+    using MassTransit;
+    using MassTransit.Definition;
+    using Microsoft.Extensions.Logging;
+
+
     public class SubmitBatchConsumer :
         IConsumer<SubmitBatch>
     {
@@ -28,59 +25,55 @@ namespace SampleBatch.Components.Consumers
                     _log.LogDebug("Validating batch {BatchId}", context.Message.BatchId);
 
                 // do some validation
-                if(context.Message.OrderIds.Length == 0)
+                if (context.Message.OrderIds.Length == 0)
                 {
                     await context.RespondAsync<BatchRejected>(new
                     {
                         context.Message.BatchId,
-                        ReceiveTime = DateTime.UtcNow,
+                        InVar.Timestamp,
                         Reason = "Must have at least one OrderId to Process"
                     });
 
                     return;
                 }
 
-                await context.Publish(new Received(context.Message.BatchId, context.Message.Action, context.Message.OrderIds, context.Message.ActiveThreshold, context.Message.DelayInSeconds));
+                await context.Publish<BatchReceived>(new
+                {
+                    context.Message.BatchId,
+                    InVar.Timestamp,
+                    context.Message.Action,
+                    context.Message.OrderIds,
+                    context.Message.ActiveThreshold,
+                    context.Message.DelayInSeconds
+                });
 
                 await context.RespondAsync<BatchSubmitted>(new
                 {
                     context.Message.BatchId,
-                    ReceiveTime = DateTime.UtcNow,
+                    InVar.Timestamp
                 });
 
                 if (_log.IsEnabled(LogLevel.Debug))
                     _log.LogDebug("Accepted order {BatchId}", context.Message.BatchId);
             }
         }
-
-        class Received : BatchReceived
-        {
-            public Received(Guid batchId, BatchAction action, Guid[] orderIds, int activeThreshold, int? delayInSeconds = null)
-            {
-                BatchId = batchId;
-                Timestamp = DateTime.UtcNow;
-                Action = action;
-                OrderIds = orderIds;
-                ActiveThreshold = activeThreshold;
-                DelayInSeconds = delayInSeconds;
-            }
-
-            public Guid BatchId { get; }
-            public DateTime Timestamp { get; }
-            public BatchAction Action { get; }
-            public Guid[] OrderIds { get; } = Array.Empty<Guid>();
-            public int ActiveThreshold { get; }
-            public int? DelayInSeconds { get; }
-        }
     }
 
 
-    //public class SubmitBatchJobConsumerDefinition :
-    //    ConsumerDefinition<SubmitBatchJobConsumer>
-    //{
-    //    public SubmitBatchJobConsumerDefinition()
-    //    {
-    //        ConcurrentMessageLimit = 10;
-    //    }
-    //}
+    public class SubmitBatchConsumerDefinition :
+        ConsumerDefinition<SubmitBatchConsumer>
+    {
+        public SubmitBatchConsumerDefinition()
+        {
+            ConcurrentMessageLimit = 10;
+
+            Request<SubmitBatch>(x =>
+            {
+                x.Responds<BatchRejected>();
+                x.Responds<BatchSubmitted>();
+
+                x.Publishes<BatchReceived>();
+            });
+        }
+    }
 }

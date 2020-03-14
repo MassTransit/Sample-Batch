@@ -6,6 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MassTransit.Analyzers" Version="6.2.1" />
+    <PackageReference Include="MassTransit.AspNetCore" Version="6.2.1" />
     <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="6.2.1" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="6.2.1" />
     <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="6.2.1" />
@@ -14,6 +16,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SampleBatch.Contracts\SampleBatch.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Models" />
   </ItemGroup>
 
 </Project>

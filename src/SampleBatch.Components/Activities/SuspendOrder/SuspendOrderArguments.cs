@@ -1,7 +1,8 @@
-﻿using System;
-
-namespace SampleBatch.Components.Activities.SuspendOrder
+﻿namespace SampleBatch.Components.Activities.SuspendOrder
 {
+    using System;
+
+
     public interface SuspendOrderArguments
     {
         Guid OrderId { get; }

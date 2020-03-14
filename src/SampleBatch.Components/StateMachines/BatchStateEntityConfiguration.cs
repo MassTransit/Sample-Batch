@@ -1,14 +1,16 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using SampleBatch.Common;
-using SampleBatch.Contracts.Enums;
-using System;
-using System.Collections.Generic;
-
-namespace SampleBatch.Components.StateMachines
+﻿namespace SampleBatch.Components.StateMachines
 {
-    class BatchStateEntityConfiguration : IEntityTypeConfiguration<BatchState>
+    using System;
+    using System.Collections.Generic;
+    using Common;
+    using Contracts.Enums;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.EntityFrameworkCore.Metadata.Builders;
+    using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+
+    class BatchStateEntityConfiguration :
+        IEntityTypeConfiguration<BatchState>
     {
         public void Configure(EntityTypeBuilder<BatchState> builder)
         {

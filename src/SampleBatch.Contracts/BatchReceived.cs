@@ -1,8 +1,9 @@
-﻿using SampleBatch.Contracts.Enums;
-using System;
-
-namespace SampleBatch.Contracts
+﻿namespace SampleBatch.Contracts
 {
+    using System;
+    using Enums;
+
+
     public interface BatchReceived
     {
         Guid BatchId { get; }

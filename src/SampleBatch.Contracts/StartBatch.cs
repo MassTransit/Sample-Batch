@@ -1,9 +1,10 @@
-﻿using System;
-
-namespace SampleBatch.Contracts
+﻿namespace SampleBatch.Contracts
 {
+    using System;
+
+
     public interface StartBatch
     {
-        Guid BatchId { get; set; }
+        Guid BatchId { get; }
     }
 }

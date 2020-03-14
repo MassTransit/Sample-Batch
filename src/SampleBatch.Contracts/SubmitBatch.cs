@@ -1,20 +1,21 @@
-﻿using SampleBatch.Contracts.Enums;
-using System;
-
-namespace SampleBatch.Contracts
+﻿namespace SampleBatch.Contracts
 {
+    using System;
+    using Enums;
+
+
     public interface SubmitBatch
     {
-        Guid BatchId { get; set; }
+        Guid BatchId { get; }
 
-        DateTime Timestamp { get; set; }
+        DateTime Timestamp { get; }
 
-        BatchAction Action { get; set; }
+        BatchAction Action { get; }
 
-        Guid[] OrderIds { get; set; }
+        Guid[] OrderIds { get; }
 
-        int ActiveThreshold { get; set; }
+        int ActiveThreshold { get; }
 
-        int? DelayInSeconds { get; set; }
+        int? DelayInSeconds { get; }
     }
 }

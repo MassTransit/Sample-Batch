@@ -1,14 +1,16 @@
-﻿using System;
-using System.Threading.Tasks;
-using MassTransit.Courier;
-using Microsoft.Extensions.Logging;
-using MassTransit.Courier.Exceptions;
-
-namespace SampleBatch.Components.Activities.CancelOrder
+﻿namespace SampleBatch.Components.Activities.CancelOrder
 {
-    public class CancelOrderActivity : IExecuteActivity<CancelOrderArguments>
+    using System;
+    using System.Threading.Tasks;
+    using MassTransit.Courier;
+    using MassTransit.Courier.Exceptions;
+    using Microsoft.Extensions.Logging;
+
+
+    public class CancelOrderActivity :
+        IExecuteActivity<CancelOrderArguments>
     {
-        private ILogger _logger;
+        readonly ILogger _logger;
 
         public CancelOrderActivity(ILoggerFactory loggerFactory)
         {
@@ -22,14 +24,11 @@ namespace SampleBatch.Components.Activities.CancelOrder
             var random = new Random(DateTime.Now.Millisecond);
 
             if (random.Next(1, 10) == 1)
-            {
                 throw new RoutingSlipException("Order shipped, cannot cancel");
-            }
-            else
-            {
-                await Task.Delay(random.Next(1, 7) * 1000);
-                return context.Completed();
-            }
+
+            await Task.Delay(random.Next(1, 7) * 1000);
+
+            return context.Completed();
         }
     }
 }

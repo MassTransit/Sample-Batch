@@ -1,9 +1,9 @@
-﻿namespace SampleBatch.Contracts
+namespace SampleBatch.Contracts
 {
     using System;
 
 
-    public interface BatchSubmitted
+    public interface BatchStatusRequested
     {
         Guid BatchId { get; }
 

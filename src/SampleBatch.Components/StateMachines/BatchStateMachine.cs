@@ -1,16 +1,18 @@
-﻿using Automatonymous;
-using GreenPipes;
-using MassTransit;
-using MassTransit.Definition;
-using SampleBatch.Contracts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace SampleBatch.Components.StateMachines
+﻿namespace SampleBatch.Components.StateMachines
 {
-    public class BatchStateMachine : MassTransitStateMachine<BatchState>
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Automatonymous;
+    using Contracts;
+    using GreenPipes;
+    using MassTransit;
+    using MassTransit.Definition;
+
+
+    public class BatchStateMachine :
+        MassTransitStateMachine<BatchState>
     {
         public BatchStateMachine()
         {
@@ -19,6 +21,15 @@ namespace SampleBatch.Components.StateMachines
             Event(() => BatchReceived, x => x.CorrelateById(c => c.Message.BatchId));
             Event(() => BatchJobDone, x => x.CorrelateById(c => c.Message.BatchId));
             Event(() => CancelBatch, x => x.CorrelateById(c => c.Message.BatchId));
+            Event(() => StateRequested, x =>
+            {
+                x.CorrelateById(c => c.Message.BatchId);
+                x.OnMissingInstance(m => m.ExecuteAsync(context => context.RespondAsync<BatchNotFound>(new
+                {
+                    context.Message.BatchId,
+                    InVar.Timestamp
+                })));
+            });
 
             Schedule(() => StartBatch, x => x.ScheduledId, x =>
             {
@@ -31,10 +42,11 @@ namespace SampleBatch.Components.StateMachines
                     .Then(context => SetReceiveTimestamp(context.Instance, context.Data.Timestamp))
                     .Then(Initialize)
                     .IfElse(context => context.Data.DelayInSeconds.HasValue,
-                        binder => binder
-                            .Schedule(StartBatch, context => new Start { BatchId = context.Instance.CorrelationId }, context => TimeSpan.FromSeconds(context.Data.DelayInSeconds.Value))
+                        thenBinder => thenBinder
+                            .Schedule(StartBatch, context => context.Init<StartBatch>(new {BatchId = context.Instance.CorrelationId}),
+                                context => TimeSpan.FromSeconds(context.Data.DelayInSeconds.Value))
                             .TransitionTo(Received),
-                        binder => binder
+                        elseBinder => elseBinder
                             .ThenAsync(DispatchJobs)
                             .TransitionTo(Started)),
                 When(CancelBatch)
@@ -74,6 +86,15 @@ namespace SampleBatch.Components.StateMachines
             During(Finished, Ignore(CancelBatch));
 
             DuringAny(
+                When(StateRequested)
+                    .RespondAsync(async x => await x.Init<BatchStatus>(new
+                    {
+                        BatchId = x.Instance.CorrelationId,
+                        InVar.Timestamp,
+                        ProcessingJobCount = x.Instance.ProcessingOrderIds.Count,
+                        UnprocessedJobCount = x.Instance.UnprocessedOrderIds.Count,
+                        State = (await this.GetState(x.Instance)).Name
+                    })),
                 When(BatchReceived)
                     .Then(context => Touch(context.Instance, context.Data.Timestamp))
                     .Then(context => SetReceiveTimestamp(context.Instance, context.Data.Timestamp))
@@ -89,8 +110,9 @@ namespace SampleBatch.Components.StateMachines
         public Schedule<BatchState, StartBatch> StartBatch { get; private set; }
         public Event<BatchJobDone> BatchJobDone { get; private set; }
         public Event<CancelBatch> CancelBatch { get; private set; }
+        public Event<BatchStatusRequested> StateRequested { get; private set; }
 
-        private static void Touch(BatchState state, DateTime timestamp)
+        static void Touch(BatchState state, DateTime timestamp)
         {
             if (!state.CreateTimestamp.HasValue)
                 state.CreateTimestamp = timestamp;
@@ -99,18 +121,18 @@ namespace SampleBatch.Components.StateMachines
                 state.UpdateTimestamp = timestamp;
         }
 
-        private static void SetReceiveTimestamp(BatchState state, DateTime timestamp)
+        static void SetReceiveTimestamp(BatchState state, DateTime timestamp)
         {
             if (!state.ReceiveTimestamp.HasValue || state.ReceiveTimestamp.Value > timestamp)
                 state.ReceiveTimestamp = timestamp;
         }
 
-        private static void Initialize(BehaviorContext<BatchState, BatchReceived> context)
+        static void Initialize(BehaviorContext<BatchState, BatchReceived> context)
         {
             InitializeInstance(context.Instance, context.Data);
         }
 
-        private static void InitializeInstance(BatchState instance, BatchReceived data)
+        static void InitializeInstance(BatchState instance, BatchReceived data)
         {
             instance.Action = data.Action;
             instance.Total = data.OrderIds.Length;
@@ -118,37 +140,38 @@ namespace SampleBatch.Components.StateMachines
             instance.ActiveThreshold = data.ActiveThreshold;
         }
 
-        private static async Task DispatchJobs(BehaviorContext<BatchState> context)
+        static async Task DispatchJobs(BehaviorContext<BatchState> context)
         {
             var jobsToSend = new List<Task>();
 
             while (context.Instance.UnprocessedOrderIds.Any()
                 && context.Instance.ProcessingOrderIds.Count < context.Instance.ActiveThreshold)
-            {
                 jobsToSend.Add(InitiateJob(context));
-            }
 
             await Task.WhenAll(jobsToSend);
         }
 
-        private static Task InitiateJob(BehaviorContext<BatchState> context)
+        static Task InitiateJob(BehaviorContext<BatchState> context)
         {
             var orderId = context.Instance.UnprocessedOrderIds.Pop();
             var batchJobId = NewId.NextGuid();
             context.Instance.ProcessingOrderIds.Add(batchJobId, orderId);
-            return context.GetPayload<ConsumeContext>().Publish<BatchJobReceived>(new { BatchJobId = batchJobId, Timestamp = DateTime.UtcNow, BatchId = context.Instance.CorrelationId, OrderId = orderId, context.Instance.Action });
+            return context.GetPayload<ConsumeContext>().Publish<BatchJobReceived>(new
+            {
+                BatchJobId = batchJobId,
+                InVar.Timestamp,
+                BatchId = context.Instance.CorrelationId,
+                OrderId = orderId,
+                context.Instance.Action
+            });
         }
 
-        private static void FinalizeJob(BehaviorContext<BatchState, BatchJobDone> context)
+        static void FinalizeJob(BehaviorContext<BatchState, BatchJobDone> context)
         {
             context.Instance.ProcessingOrderIds.Remove(context.Data.BatchJobId);
         }
-
-        class Start : StartBatch
-        {
-            public Guid BatchId { get; set; }
-        }
     }
+
 
     public class BatchStateMachineDefinition :
         SagaDefinition<BatchState>
@@ -160,9 +183,14 @@ namespace SampleBatch.Components.StateMachines
 
         protected override void ConfigureSaga(IReceiveEndpointConfigurator endpointConfigurator, ISagaConfigurator<BatchState> sagaConfigurator)
         {
-
             sagaConfigurator.UseMessageRetry(r => r.Immediate(5));
             sagaConfigurator.UseInMemoryOutbox();
+
+            var partition = endpointConfigurator.CreatePartitioner(8);
+
+            sagaConfigurator.Message<BatchJobDone>(x => x.UsePartitioner(partition, m => m.Message.BatchId));
+            sagaConfigurator.Message<BatchReceived>(x => x.UsePartitioner(partition, m => m.Message.BatchId));
+            sagaConfigurator.Message<CancelBatch>(x => x.UsePartitioner(partition, m => m.Message.BatchId));
         }
     }
 }

@@ -1,14 +1,15 @@
-﻿using SampleBatch.Contracts.Enums;
-using System;
-
-namespace SampleBatch.Contracts
+﻿namespace SampleBatch.Contracts
 {
+    using System;
+    using Enums;
+
+
     public interface ProcessBatchJob
     {
-        Guid BatchJobId { get; set; }
-        Guid BatchId { get; set; }
-        DateTime Timestamp { get; set; }
-        Guid OrderId { get; set; }
-        BatchAction Action { get; set; }
+        Guid BatchJobId { get; }
+        Guid BatchId { get; }
+        DateTime Timestamp { get; }
+        Guid OrderId { get; }
+        BatchAction Action { get; }
     }
 }

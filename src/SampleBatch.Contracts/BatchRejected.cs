@@ -1,13 +1,12 @@
-﻿using System;
-
-namespace SampleBatch.Contracts
+﻿namespace SampleBatch.Contracts
 {
+    using System;
+
+
     public interface BatchRejected
     {
         Guid BatchId { get; }
-
         DateTime Timestamp { get; }
-
-        string Reason { get; set; }
+        string Reason { get; }
     }
 }

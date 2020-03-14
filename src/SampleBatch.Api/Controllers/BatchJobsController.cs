@@ -1,25 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
-using SampleBatch.Api.Models;
 using SampleBatch.Contracts;
 using SampleBatch.Contracts.Enums;
+
 
 namespace SampleBatch.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BatchJobsController : ControllerBase
+    public class BatchJobsController :
+        ControllerBase
     {
-        private readonly IRequestClient<SubmitBatch> _submitBatchClient;
-        private readonly IPublishEndpoint _publishEndpoint;
+        readonly IRequestClient<SubmitBatch> _submitBatchClient;
+        readonly IRequestClient<BatchStatusRequested> _batchStatusClient;
+        readonly IPublishEndpoint _publishEndpoint;
 
-        public BatchJobsController(IRequestClient<SubmitBatch> submitBatchClient, IPublishEndpoint publishEndpoint)
+        public BatchJobsController(IRequestClient<SubmitBatch> submitBatchClient, IRequestClient<BatchStatusRequested> batchStatusClient,
+            IPublishEndpoint publishEndpoint)
         {
             _submitBatchClient = submitBatchClient;
+            _batchStatusClient = batchStatusClient;
             _publishEndpoint = publishEndpoint;
         }
 
@@ -33,10 +36,27 @@ namespace SampleBatch.Api.Controllers
 
         // GET api/batchjobs/5
         [HttpGet("{id}", Name = "GetById")]
-        public IActionResult Get(int id)
+        public async Task<ActionResult<BatchStatus>> Get(Guid id)
         {
-            // Can query the DB within the API project, or move the query into a consumer, and use MT Req/Response
-            return Ok();
+            var (status, notFound) = await _batchStatusClient.GetResponse<BatchStatus, BatchNotFound>(new
+            {
+                BatchId = id,
+                InVar.Timestamp,
+            });
+
+            if (notFound.IsCompletedSuccessfully)
+            {
+                await notFound;
+
+                return NotFound(new
+                {
+                    BatchId = id
+                });
+            }
+
+            Response<BatchStatus> response = await status;
+
+            return Ok(response.Message);
         }
 
         // POST api/batchjobs/create
@@ -47,13 +67,13 @@ namespace SampleBatch.Api.Controllers
             var orderIds = new List<Guid>();
             for (int i = 0; i < jobCount; i++)
             {
-                orderIds.Add(Guid.NewGuid());
+                orderIds.Add(NewId.NextGuid());
             }
 
-            var (accepted, rejected) = await _submitBatchClient.GetResponse<BatchSubmitted, BatchRejected>(new CreateBatch
+            var (accepted, rejected) = await _submitBatchClient.GetResponse<BatchSubmitted, BatchRejected>(new
             {
                 BatchId = id,
-                Timestamp = DateTime.UtcNow,
+                InVar.Timestamp,
                 Action = BatchAction.CancelOrders,
                 OrderIds = orderIds.ToArray(),
                 ActiveThreshold = activeThreshold,
@@ -62,7 +82,7 @@ namespace SampleBatch.Api.Controllers
 
             if (accepted.IsCompleted)
             {
-                var result = await accepted;
+                await accepted;
 
                 return Accepted(id);
             }
@@ -75,7 +95,11 @@ namespace SampleBatch.Api.Controllers
         [HttpPut("{id}/cancel", Name = "Cancel")]
         public async Task<ActionResult<Guid>> Cancel(Guid id)
         {
-            await _publishEndpoint.Publish<CancelBatch>(new { BatchId = id, Timestamp = DateTime.UtcNow });
+            await _publishEndpoint.Publish<CancelBatch>(new
+            {
+                BatchId = id,
+                InVar.Timestamp
+            });
 
             return Accepted();
         }

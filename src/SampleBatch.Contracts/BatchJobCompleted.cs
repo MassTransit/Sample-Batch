@@ -1,7 +1,8 @@
-﻿using System;
-
-namespace SampleBatch.Contracts
+﻿namespace SampleBatch.Contracts
 {
+    using System;
+
+
     public interface BatchJobCompleted
     {
         Guid BatchJobId { get; }

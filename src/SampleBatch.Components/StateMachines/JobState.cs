@@ -1,14 +1,13 @@
-﻿using Automatonymous;
-using SampleBatch.Contracts.Enums;
-using System;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace SampleBatch.Components.StateMachines
+﻿namespace SampleBatch.Components.StateMachines
 {
-    public class JobState : SagaStateMachineInstance
-    {
-        public Guid CorrelationId { get; set; }
+    using System;
+    using Automatonymous;
+    using Contracts.Enums;
 
+
+    public class JobState :
+        SagaStateMachineInstance
+    {
         public Guid BatchId { get; set; }
 
         public Guid OrderId { get; set; }
@@ -27,5 +26,6 @@ namespace SampleBatch.Components.StateMachines
 
         // Navigation Properties
         public BatchState Batch { get; set; }
+        public Guid CorrelationId { get; set; }
     }
 }

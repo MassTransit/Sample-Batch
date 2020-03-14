@@ -1,18 +1,15 @@
-﻿using MassTransit;
-using MassTransit.Courier;
-using MassTransit.Courier.Contracts;
-using MassTransit.Definition;
-using Microsoft.Extensions.Logging;
-using SampleBatch.Common;
-using SampleBatch.Contracts;
-using SampleBatch.Contracts.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SampleBatch.Components.Consumers
+﻿namespace SampleBatch.Components.Consumers
 {
+    using System;
+    using System.Threading.Tasks;
+    using Contracts;
+    using Contracts.Enums;
+    using MassTransit;
+    using MassTransit.Courier;
+    using MassTransit.Courier.Contracts;
+    using Microsoft.Extensions.Logging;
+
+
     public class ProcessBatchJobConsumer :
         IConsumer<ProcessBatchJob>
     {
@@ -29,13 +26,12 @@ namespace SampleBatch.Components.Consumers
             {
                 var builder = new RoutingSlipBuilder(NewId.NextGuid());
 
-
                 switch (context.Message.Action)
                 {
                     case BatchAction.CancelOrders:
                         builder.AddActivity(
                             "CancelOrder",
-                            context.GetDestinationAddress("cancel-order_execute"),
+                            new Uri("queue:cancel-order_execute"),
                             new
                             {
                                 context.Message.OrderId,
@@ -54,14 +50,12 @@ namespace SampleBatch.Components.Consumers
                                 context.Message.OrderId
                             }));
                         break;
+
                     case BatchAction.SuspendOrders:
                         builder.AddActivity(
                             "SuspendOrder",
-                            context.GetDestinationAddress("suspend-order_execute"),
-                            new
-                            {
-                                context.Message.OrderId
-                            });
+                            new Uri("queue:suspect-order_execute"),
+                            new {context.Message.OrderId});
 
                         await builder.AddSubscription(
                             context.SourceAddress,
@@ -74,8 +68,6 @@ namespace SampleBatch.Components.Consumers
                                 context.Message.BatchId,
                                 context.Message.OrderId
                             }));
-                        break;
-                    default:
                         break;
                 }
 

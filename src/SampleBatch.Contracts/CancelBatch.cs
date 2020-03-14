@@ -1,12 +1,12 @@
-﻿using SampleBatch.Contracts.Enums;
-using System;
-
-namespace SampleBatch.Contracts
+﻿namespace SampleBatch.Contracts
 {
+    using System;
+
+
     public interface CancelBatch
     {
-        Guid BatchId { get; set; }
+        Guid BatchId { get; }
 
-        DateTime Timestamp { get; set; }
+        DateTime Timestamp { get; }
     }
 }

@@ -54,7 +54,7 @@
                     case BatchAction.SuspendOrders:
                         builder.AddActivity(
                             "SuspendOrder",
-                            new Uri("queue:suspect-order_execute"),
+                            new Uri("queue:suspend-order_execute"),
                             new {context.Message.OrderId});
 
                         await builder.AddSubscription(

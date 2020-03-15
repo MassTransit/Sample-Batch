@@ -6,6 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Models\**" />
+    <Content Remove="Models\**" />
+    <EmbeddedResource Remove="Models\**" />
+    <None Remove="Models\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MassTransit.Analyzers" Version="6.2.1" />
     <PackageReference Include="MassTransit.AspNetCore" Version="6.2.1" />
     <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="6.2.1" />
@@ -16,10 +23,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SampleBatch.Contracts\SampleBatch.Contracts.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Models" />
   </ItemGroup>
 
 </Project>

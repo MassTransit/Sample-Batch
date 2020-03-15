@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using SampleBatch.Contracts;
 using SampleBatch.Contracts.Enums;
 
@@ -17,19 +19,31 @@ namespace SampleBatch.Api.Controllers
         readonly IRequestClient<SubmitBatch> _submitBatchClient;
         readonly IRequestClient<BatchStatusRequested> _batchStatusClient;
         readonly IPublishEndpoint _publishEndpoint;
+        private readonly IDistributedCache _cache;
 
-        public BatchJobsController(IRequestClient<SubmitBatch> submitBatchClient, IRequestClient<BatchStatusRequested> batchStatusClient,
-            IPublishEndpoint publishEndpoint)
+        public BatchJobsController(
+            IRequestClient<SubmitBatch> submitBatchClient,
+            IRequestClient<BatchStatusRequested> batchStatusClient,
+            IPublishEndpoint publishEndpoint,
+            IDistributedCache cache)
         {
             _submitBatchClient = submitBatchClient;
             _batchStatusClient = batchStatusClient;
             _publishEndpoint = publishEndpoint;
+            _cache = cache;
         }
 
         // GET api/batchjobs
         [HttpGet(Name = "Get")]
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
+            var CachedTimeUTC = "Cached Time Expired";
+            var encodedCachedTimeUTC = await _cache.GetAsync("cachedTimeUTC");
+
+            if (encodedCachedTimeUTC != null)
+            {
+                CachedTimeUTC = Encoding.UTF8.GetString(encodedCachedTimeUTC);
+            }
             // Can query the DB within the API project, or move the query into a consumer, and use MT Req/Response
             return Ok();
         }

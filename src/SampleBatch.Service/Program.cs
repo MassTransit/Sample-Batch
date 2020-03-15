@@ -94,6 +94,11 @@ namespace SampleBatch.Service
                     // So we don't need to use ef migrations for this sample.
                     // Likely if you are going to deploy to a production environment, you want a better DB deploy strategy.
                     services.AddHostedService<EfDbCreatedHostedService>();
+
+                    services.AddStackExchangeRedisCache(options =>
+                    {
+                        options.Configuration = "localhost";
+                    });
                 })
                 .ConfigureLogging((hostingContext, logging) =>
                 {

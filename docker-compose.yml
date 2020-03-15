@@ -16,4 +16,8 @@ services:
     environment:
       SA_PASSWORD: "MTsample1"
       ACCEPT_EULA: "Y"
-    
+  redis:
+    image: redis
+    container_name: cache
+    ports:
+      - "6379:6379"

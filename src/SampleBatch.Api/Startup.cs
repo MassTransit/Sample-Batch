@@ -14,7 +14,8 @@ using SampleBatch.Contracts;
 namespace SampleBatch.Api
 {
     using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-
+    using Microsoft.Extensions.Caching.Distributed;
+    using System.Text;
 
     public class Startup
     {
@@ -40,10 +41,15 @@ namespace SampleBatch.Api
             });
 
             services.AddOpenApiDocument(cfg => cfg.PostProcess = d => d.Info.Title = "Sample-Batch");
+
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = "localhost";
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime lifetime, IDistributedCache cache)
         {
             if (env.IsDevelopment())
             {
@@ -60,6 +66,15 @@ namespace SampleBatch.Api
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+            });
+
+            lifetime.ApplicationStarted.Register(() =>
+            {
+                var currentTimeUTC = DateTime.UtcNow.ToString();
+                byte[] encodedCurrentTimeUTC = Encoding.UTF8.GetBytes(currentTimeUTC);
+                var options = new DistributedCacheEntryOptions()
+                    .SetSlidingExpiration(TimeSpan.FromSeconds(60));
+                cache.Set("cachedTimeUTC", encodedCurrentTimeUTC, options);
             });
         }
 

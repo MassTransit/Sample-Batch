@@ -1,21 +1,22 @@
-﻿using System;
-using MassTransit;
-using MassTransit.AspNetCoreIntegration;
-using MassTransit.Azure.ServiceBus.Core;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
-using SampleBatch.Contracts;
-
-
-namespace SampleBatch.Api
+﻿namespace SampleBatch.Api
 {
-    using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-    using Microsoft.Extensions.Caching.Distributed;
+    using System;
+    using System.Globalization;
     using System.Text;
+    using Contracts;
+    using MassTransit;
+    using MassTransit.Azure.ServiceBus.Core;
+    using MassTransit.Definition;
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.Extensions.Caching.Distributed;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.DependencyInjection.Extensions;
+    using Microsoft.Extensions.Hosting;
+    using Microsoft.Extensions.Options;
+
 
     public class Startup
     {
@@ -34,11 +35,15 @@ namespace SampleBatch.Api
 
             services.Configure<AppConfig>(options => Configuration.GetSection("AppConfig").Bind(options));
 
-            services.AddMassTransit(ConfigureBus, cfg =>
+            services.TryAddSingleton(KebabCaseEndpointNameFormatter.Instance);
+            services.AddMassTransit(cfg =>
             {
                 cfg.AddRequestClient<SubmitBatch>();
                 cfg.AddRequestClient<BatchStatusRequested>();
+                cfg.AddBus(ConfigureBus);
             });
+
+            services.AddMassTransitHostedService();
 
             services.AddOpenApiDocument(cfg => cfg.PostProcess = d => d.Info.Title = "Sample-Batch");
 
@@ -52,9 +57,7 @@ namespace SampleBatch.Api
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime lifetime, IDistributedCache cache)
         {
             if (env.IsDevelopment())
-            {
                 app.UseDeveloperExceptionPage();
-            }
 
             app.UseRouting();
 
@@ -70,11 +73,11 @@ namespace SampleBatch.Api
 
             lifetime.ApplicationStarted.Register(() =>
             {
-                var currentTimeUTC = DateTime.UtcNow.ToString();
-                byte[] encodedCurrentTimeUTC = Encoding.UTF8.GetBytes(currentTimeUTC);
+                var currentTimeUtc = DateTime.UtcNow.ToString(CultureInfo.InvariantCulture);
+                byte[] encodedCurrentTimeUtc = Encoding.UTF8.GetBytes(currentTimeUtc);
                 var options = new DistributedCacheEntryOptions()
                     .SetSlidingExpiration(TimeSpan.FromSeconds(60));
-                cache.Set("cachedTimeUTC", encodedCurrentTimeUTC, options);
+                cache.Set("cachedTimeUTC", encodedCurrentTimeUtc, options);
             });
         }
 
@@ -83,14 +86,10 @@ namespace SampleBatch.Api
             var appSettings = provider.GetRequiredService<IOptions<AppConfig>>().Value;
 
             if (appSettings.AzureServiceBus != null)
-            {
                 return ConfigureAzureSb(provider, appSettings);
-            }
 
             if (appSettings.RabbitMq != null)
-            {
                 return ConfigureRabbitMqBus(provider, appSettings);
-            }
 
             throw new ApplicationException("Invalid Bus configuration. Couldn't find Azure or RabbitMq config");
         }

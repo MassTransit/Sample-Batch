@@ -1,28 +1,25 @@
-﻿using MassTransit;
-using MassTransit.Definition;
-using MassTransit.EntityFrameworkCoreIntegration;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using SampleBatch.Components;
-using SampleBatch.Components.Consumers;
-using SampleBatch.Components.StateMachines;
-using SampleBatch.Contracts;
-using System;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
-using SampleBatch.Common;
-using SampleBatch.Components.Activities;
-using MassTransit.Azure.ServiceBus.Core;
-
-
-namespace SampleBatch.Service
+﻿namespace SampleBatch.Service
 {
+    using System;
+    using System.Diagnostics;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Components;
+    using Components.Activities;
+    using Components.Consumers;
+    using Components.StateMachines;
+    using Contracts;
+    using MassTransit;
+    using MassTransit.Azure.ServiceBus.Core;
+    using MassTransit.Definition;
+    using MassTransit.EntityFrameworkCoreIntegration;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.DependencyInjection.Extensions;
+    using Microsoft.Extensions.Hosting;
+    using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
 
 
     class Program
@@ -36,7 +33,7 @@ namespace SampleBatch.Service
             var builder = new HostBuilder()
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
-                    config.AddJsonFile("appsettings.json", optional: true);
+                    config.AddJsonFile("appsettings.json", true);
                     config.AddEnvironmentVariables();
 
                     if (args != null)
@@ -60,7 +57,7 @@ namespace SampleBatch.Service
                                 });
 
                                 // I specified the MsSqlLockStatements because in my State Entities EFCore EntityConfigurations, I changed the column name from CorrelationId, to "BatchId" and "BatchJobId"
-                                // Otherwise I could just use r.UseSqlServer(), which uses the default, which are "... WHERE CorrelationId = @p0"
+                                // Otherwise, I could just use r.UseSqlServer(), which uses the default, which are "... WHERE CorrelationId = @p0"
                                 r.LockStatementProvider =
                                     new CustomSqlLockStatementProvider("select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchId = @p0");
                             });
@@ -76,7 +73,7 @@ namespace SampleBatch.Service
                                 });
 
                                 // I specified the MsSqlLockStatements because in my State Entities EFCore EntityConfigurations, I changed the column name from CorrelationId, to "BatchId" and "BatchJobId"
-                                // Otherwise I could just use r.UseSqlServer(), which uses the default, which are "... WHERE CorrelationId = @p0"
+                                // Otherwise, I could just use r.UseSqlServer(), which uses the default, which are "... WHERE CorrelationId = @p0"
                                 r.LockStatementProvider =
                                     new CustomSqlLockStatementProvider("select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchJobId = @p0");
                             });
@@ -107,13 +104,9 @@ namespace SampleBatch.Service
                 });
 
             if (isService)
-            {
                 await builder.UseWindowsService().Build().RunAsync();
-            }
             else
-            {
                 await builder.RunConsoleAsync();
-            }
         }
 
         static IBusControl ConfigureBus(IServiceProvider provider)
@@ -121,14 +114,10 @@ namespace SampleBatch.Service
             var appSettings = provider.GetRequiredService<IOptions<AppConfig>>().Value;
 
             if (appSettings.AzureServiceBus != null)
-            {
                 return ConfigureAzureSb(provider, appSettings);
-            }
 
             if (appSettings.RabbitMq != null)
-            {
                 return ConfigureRabbitMqBus(provider, appSettings);
-            }
 
             throw new ApplicationException("Invalid Bus configuration. Couldn't find Azure or RabbitMq config");
         }

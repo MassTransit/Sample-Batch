@@ -84,7 +84,7 @@
                         cfg.AddBus(ConfigureBus);
                     });
 
-                    services.AddDbContext<DbContext, SampleBatchDbContext>(x => x.UseSqlServer(hostContext.Configuration.GetConnectionString("sample-batch")));
+                    services.AddDbContext<SampleBatchDbContext>(x => x.UseSqlServer(hostContext.Configuration.GetConnectionString("sample-batch")));
 
                     services.AddHostedService<MassTransitConsoleHostedService>();
 

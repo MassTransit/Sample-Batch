@@ -10,10 +10,12 @@
     public class SuspendOrderActivity :
         IExecuteActivity<SuspendOrderArguments>
     {
+        private readonly SampleBatchDbContext _dbContext;
         readonly ILogger _logger;
 
-        public SuspendOrderActivity(ILoggerFactory loggerFactory)
+        public SuspendOrderActivity(SampleBatchDbContext dbContext, ILoggerFactory loggerFactory)
         {
+            _dbContext = dbContext;
             _logger = loggerFactory.CreateLogger<SuspendOrderActivity>();
         }
 

@@ -10,10 +10,12 @@
     public class CancelOrderActivity :
         IExecuteActivity<CancelOrderArguments>
     {
+        private readonly SampleBatchDbContext _dbContext;
         readonly ILogger _logger;
 
-        public CancelOrderActivity(ILoggerFactory loggerFactory)
+        public CancelOrderActivity(SampleBatchDbContext dbContext, ILoggerFactory loggerFactory)
         {
+            _dbContext = dbContext;
             _logger = loggerFactory.CreateLogger<CancelOrderActivity>();
         }
 

@@ -10,17 +10,12 @@
     using Components.StateMachines;
     using Contracts;
     using MassTransit;
-    using MassTransit.Azure.ServiceBus.Core;
-    using MassTransit.Definition;
     using MassTransit.EntityFrameworkCoreIntegration;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.DependencyInjection.Extensions;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
-    using Microsoft.Extensions.Options;
-
 
     class Program
     {
@@ -41,11 +36,12 @@
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
+                    var appConfig = hostContext.Configuration.GetSection(nameof(AppConfig)).Get<AppConfig>();
                     services.Configure<AppConfig>(options => hostContext.Configuration.GetSection("AppConfig").Bind(options));
 
-                    services.TryAddSingleton(KebabCaseEndpointNameFormatter.Instance);
                     services.AddMassTransit(cfg =>
                     {
+                        cfg.SetKebabCaseEndpointNameFormatter();
                         cfg.AddSagaStateMachine<BatchStateMachine, BatchState>(typeof(BatchStateMachineDefinition))
                             .EntityFrameworkRepository(r =>
                             {
@@ -81,7 +77,42 @@
                         cfg.AddConsumersFromNamespaceContaining<ConsumerAnchor>();
                         cfg.AddActivitiesFromNamespaceContaining<ActivitiesAnchor>();
 
-                        cfg.AddBus(ConfigureBus);
+                        if (appConfig.AzureServiceBus != null)
+                        {
+                            cfg.UsingAzureServiceBus((x, y) =>
+                            {
+                                y.Host(appConfig.AzureServiceBus.ConnectionString);
+
+                                var endpointNameFormatter = x.GetRequiredService<IEndpointNameFormatter>();
+                                EndpointConvention.Map<ProcessBatchJob>(new Uri($"queue:{endpointNameFormatter.Consumer<ProcessBatchJobConsumer>()}"));
+
+                                y.UseServiceBusMessageScheduler();
+
+                                y.ConfigureEndpoints(x);
+                            });
+                        }
+                        else if (appConfig.RabbitMq != null)
+                        {
+                            cfg.UsingRabbitMq((x, y) =>
+                            {
+                                y.Host(appConfig.RabbitMq.HostAddress, appConfig.RabbitMq.VirtualHost, h =>
+                                {
+                                    h.Username(appConfig.RabbitMq.Username);
+                                    h.Password(appConfig.RabbitMq.Password);
+                                });
+
+                                var endpointNameFormatter = x.GetRequiredService<IEndpointNameFormatter>();
+                                EndpointConvention.Map<ProcessBatchJob>(new Uri($"queue:{endpointNameFormatter.Consumer<ProcessBatchJobConsumer>()}"));
+
+                                y.UseInMemoryScheduler();
+
+                                y.ConfigureEndpoints(x);
+                            });
+                        }
+                        else
+                        {
+                            throw new ApplicationException("Invalid Bus configuration. Couldn't find Azure or RabbitMq config");
+                        }
                     });
 
                     services.AddDbContext<SampleBatchDbContext>(x => x.UseSqlServer(hostContext.Configuration.GetConnectionString("sample-batch")));
@@ -107,55 +138,6 @@
                 await builder.UseWindowsService().Build().RunAsync();
             else
                 await builder.RunConsoleAsync();
-        }
-
-        static IBusControl ConfigureBus(IServiceProvider provider)
-        {
-            var appSettings = provider.GetRequiredService<IOptions<AppConfig>>().Value;
-
-            if (appSettings.AzureServiceBus != null)
-                return ConfigureAzureSb(provider, appSettings);
-
-            if (appSettings.RabbitMq != null)
-                return ConfigureRabbitMqBus(provider, appSettings);
-
-            throw new ApplicationException("Invalid Bus configuration. Couldn't find Azure or RabbitMq config");
-        }
-
-        static IBusControl ConfigureRabbitMqBus(IServiceProvider provider, AppConfig appConfig)
-        {
-            var endpointNameFormatter = provider.GetService<IEndpointNameFormatter>() ?? KebabCaseEndpointNameFormatter.Instance;
-
-            return Bus.Factory.CreateUsingRabbitMq(cfg =>
-            {
-                cfg.Host(appConfig.RabbitMq.HostAddress, appConfig.RabbitMq.VirtualHost, h =>
-                {
-                    h.Username(appConfig.RabbitMq.Username);
-                    h.Password(appConfig.RabbitMq.Password);
-                });
-
-                EndpointConvention.Map<ProcessBatchJob>(new Uri($"queue:{endpointNameFormatter.Consumer<ProcessBatchJobConsumer>()}"));
-
-                cfg.UseInMemoryScheduler();
-
-                cfg.ConfigureEndpoints(provider, endpointNameFormatter);
-            });
-        }
-
-        static IBusControl ConfigureAzureSb(IServiceProvider provider, AppConfig appConfig)
-        {
-            var endpointNameFormatter = provider.GetService<IEndpointNameFormatter>() ?? KebabCaseEndpointNameFormatter.Instance;
-
-            return Bus.Factory.CreateUsingAzureServiceBus(cfg =>
-            {
-                cfg.Host(appConfig.AzureServiceBus.ConnectionString);
-
-                EndpointConvention.Map<ProcessBatchJob>(new Uri($"queue:{endpointNameFormatter.Consumer<ProcessBatchJobConsumer>()}"));
-
-                cfg.UseServiceBusMessageScheduler();
-
-                cfg.ConfigureEndpoints(provider, endpointNameFormatter);
-            });
         }
     }
 }

@@ -13,13 +13,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit.Analyzers" Version="6.2.3" />
-    <PackageReference Include="MassTransit.AspNetCore" Version="6.2.3" />
-    <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="6.2.3" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="6.2.3" />
-    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="6.2.3" />
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="3.1.2" />
-    <PackageReference Include="NSwag.AspNetCore" Version="13.2.5" />
+    <PackageReference Include="MassTransit.Analyzers" Version="7.0.0" />
+    <PackageReference Include="MassTransit.AspNetCore" Version="7.0.0" />
+    <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="7.0.0" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="7.0.0" />
+    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="3.1.5" />
+    <PackageReference Include="NSwag.AspNetCore" Version="13.6.2" />
   </ItemGroup>
 
   <ItemGroup>

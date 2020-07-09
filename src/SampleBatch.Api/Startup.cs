@@ -5,17 +5,13 @@
     using System.Text;
     using Contracts;
     using MassTransit;
-    using MassTransit.Azure.ServiceBus.Core;
-    using MassTransit.Definition;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Diagnostics.HealthChecks;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Caching.Distributed;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.DependencyInjection.Extensions;
     using Microsoft.Extensions.Hosting;
-    using Microsoft.Extensions.Options;
 
 
     public class Startup
@@ -33,14 +29,40 @@
             services.AddHealthChecks();
             services.AddMvc();
 
+            var appConfig = Configuration.GetSection(nameof(AppConfig)).Get<AppConfig>();
             services.Configure<AppConfig>(options => Configuration.GetSection("AppConfig").Bind(options));
 
-            services.TryAddSingleton(KebabCaseEndpointNameFormatter.Instance);
             services.AddMassTransit(cfg =>
             {
+                cfg.SetKebabCaseEndpointNameFormatter();
                 cfg.AddRequestClient<SubmitBatch>();
                 cfg.AddRequestClient<BatchStatusRequested>();
-                cfg.AddBus(ConfigureBus);
+
+                if (appConfig.AzureServiceBus != null)
+                {
+                    cfg.UsingAzureServiceBus((x, y) =>
+                    {
+                        y.Host(appConfig.AzureServiceBus.ConnectionString);
+                        y.ConfigureEndpoints(x);
+                    });
+                }
+                else if (appConfig.RabbitMq != null)
+                {
+                    cfg.UsingRabbitMq((x, y) =>
+                    {
+                        y.Host(appConfig.RabbitMq.HostAddress, appConfig.RabbitMq.VirtualHost, h =>
+                        {
+                            h.Username(appConfig.RabbitMq.Username);
+                            h.Password(appConfig.RabbitMq.Password);
+                        });
+
+                        y.ConfigureEndpoints(x);
+                    });
+                }
+                else
+                {
+                    throw new ApplicationException("Invalid Bus configuration. Couldn't find Azure or RabbitMq config");
+                }
             });
 
             services.AddMassTransitHostedService();
@@ -78,43 +100,6 @@
                 var options = new DistributedCacheEntryOptions()
                     .SetSlidingExpiration(TimeSpan.FromSeconds(60));
                 cache.Set("cachedTimeUTC", encodedCurrentTimeUtc, options);
-            });
-        }
-
-        static IBusControl ConfigureBus(IServiceProvider provider)
-        {
-            var appSettings = provider.GetRequiredService<IOptions<AppConfig>>().Value;
-
-            if (appSettings.AzureServiceBus != null)
-                return ConfigureAzureSb(provider, appSettings);
-
-            if (appSettings.RabbitMq != null)
-                return ConfigureRabbitMqBus(provider, appSettings);
-
-            throw new ApplicationException("Invalid Bus configuration. Couldn't find Azure or RabbitMq config");
-        }
-
-        static IBusControl ConfigureRabbitMqBus(IServiceProvider provider, AppConfig appConfig)
-        {
-            return Bus.Factory.CreateUsingRabbitMq(cfg =>
-            {
-                cfg.Host(appConfig.RabbitMq.HostAddress, appConfig.RabbitMq.VirtualHost, h =>
-                {
-                    h.Username(appConfig.RabbitMq.Username);
-                    h.Password(appConfig.RabbitMq.Password);
-                });
-
-                cfg.ConfigureEndpoints(provider);
-            });
-        }
-
-        static IBusControl ConfigureAzureSb(IServiceProvider provider, AppConfig appConfig)
-        {
-            return Bus.Factory.CreateUsingAzureServiceBus(cfg =>
-            {
-                cfg.Host(appConfig.AzureServiceBus.ConnectionString);
-
-                cfg.ConfigureEndpoints(provider);
             });
         }
     }

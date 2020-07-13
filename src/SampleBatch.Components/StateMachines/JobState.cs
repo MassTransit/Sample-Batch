@@ -24,6 +24,8 @@
 
         public string ExceptionMessage { get; set; }
 
+        public string Reason { get; set; }
+
         // Navigation Properties
         public BatchState Batch { get; set; }
         public Guid CorrelationId { get; set; }

@@ -73,7 +73,7 @@
 
                 await builder.AddSubscription(
                     context.SourceAddress,
-                    RoutingSlipEvents.Completed,
+                    RoutingSlipEvents.Completed | RoutingSlipEvents.Terminated,
                     x => x.Send<BatchJobCompleted>(new
                     {
                         context.Message.BatchJobId,

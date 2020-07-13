@@ -31,6 +31,10 @@
             During(Received,
                 When(BatchJobCompleted)
                     .Then(context => Touch(context.Instance, context.Data.Timestamp))
+                    .Then(context =>
+                    {
+                        context.Instance.Reason = context.Data.Reason;
+                    })
                     .PublishAsync(context => context.Init<BatchJobDone>(new
                     {
                         BatchJobId = context.Instance.CorrelationId,

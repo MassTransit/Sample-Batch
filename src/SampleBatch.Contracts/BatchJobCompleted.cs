@@ -8,5 +8,6 @@
         Guid BatchJobId { get; }
         Guid BatchId { get; }
         DateTime Timestamp { get; }
+        string Reason { get; }
     }
 }

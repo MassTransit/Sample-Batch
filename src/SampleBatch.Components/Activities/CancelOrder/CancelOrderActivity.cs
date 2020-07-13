@@ -25,8 +25,10 @@
 
             var random = new Random(DateTime.Now.Millisecond);
 
-            if (random.Next(1, 10) == 1)
-                throw new RoutingSlipException("Order shipped, cannot cancel");
+            //if (random.Next(1, 10) == 1)
+                //throw new RoutingSlipException("Order shipped, cannot cancel");
+                //context.Terminate(new { Reason = "Blah Blah" });
+                context.CompletedWithVariables(new { Reason = "Blah Blah" });
 
             await Task.Delay(random.Next(1, 7) * 1000);
 

@@ -33,7 +33,12 @@
                     .Then(context => Touch(context.Instance, context.Data.Timestamp))
                     .Then(context =>
                     {
-                        context.Instance.Reason = context.Data.Reason;
+                        if (context.Data.Variables.ContainsKey("Reason"))
+                            context.Instance.Reason = context.Data.Variables["Reason"] as string;
+                        else
+                            Console.WriteLine("nope, didn't find reason");
+                        if (context.Data.Variables.ContainsKey("Something"))
+                            Console.WriteLine("Yep, found something");
                     })
                     .PublishAsync(context => context.Init<BatchJobDone>(new
                     {

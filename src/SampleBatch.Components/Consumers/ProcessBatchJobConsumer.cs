@@ -71,6 +71,8 @@
                         break;
                 }
 
+                builder.AddVariable("Something", "Test");
+
                 await builder.AddSubscription(
                     context.SourceAddress,
                     RoutingSlipEvents.Completed | RoutingSlipEvents.Terminated,

@@ -81,7 +81,7 @@ namespace SampleBatch.Tests.Integration
                 {
                     BatchId = NewId.NextGuid(),
                     Timestamp = DateTime.UtcNow,
-                    BatchAction = BatchAction.CancelOrders,
+                    BatchAction = BatchActionEnum.CancelOrders,
                     ActiveThreshold = 5,
                     OrderIds = new Guid[] { Guid.NewGuid(), Guid.NewGuid() }
                 });

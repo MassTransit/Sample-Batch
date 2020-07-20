@@ -88,7 +88,7 @@ namespace SampleBatch.Api.Controllers
             {
                 BatchId = id,
                 InVar.Timestamp,
-                Action = BatchAction.CancelOrders,
+                Action = BatchActionEnum.CancelOrders,
                 OrderIds = orderIds.ToArray(),
                 ActiveThreshold = activeThreshold,
                 DelayInSeconds = delayInSeconds

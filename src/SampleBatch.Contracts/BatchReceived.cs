@@ -8,7 +8,7 @@
     {
         Guid BatchId { get; }
         DateTime Timestamp { get; }
-        BatchAction Action { get; }
+        BatchActionEnum Action { get; }
         Guid[] OrderIds { get; }
         int ActiveThreshold { get; }
 

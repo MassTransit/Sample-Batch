@@ -2,11 +2,11 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using Common;
     using Contracts.Enums;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
-    using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 
     class BatchStateEntityConfiguration :
@@ -22,8 +22,9 @@
 
             builder.Property(c => c.CurrentState).IsRequired();
 
-            builder.Property(c => c.Action)
-                .HasConversion(new EnumToStringConverter<BatchAction>());
+            builder.Property(p => p.Action)
+                .HasConversion(v => v.Value, i => BatchActionEnum.List().FirstOrDefault(e => e.Value == i));
+
 
             builder.Property(c => c.UnprocessedOrderIds)
                 .HasConversion(new JsonValueConverter<Stack<Guid>>())

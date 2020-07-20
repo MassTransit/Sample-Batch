@@ -19,12 +19,12 @@
 
         public DateTime? UpdateTimestamp { get; set; }
 
-        public BatchAction? Action { get; set; }
+        public BatchActionEnum Action { get; set; }
 
-        /// <summary>
-        /// The maximum amount of active Jobs allowed to be processing. Typically an amount larger than your Job Consumer can handle concurrently, to allow for some additional prefetch while the Batch Saga dispatches more
-        /// </summary>
-        public int? ActiveThreshold { get; set; } = 20;
+    /// <summary>
+    /// The maximum amount of active Jobs allowed to be processing. Typically an amount larger than your Job Consumer can handle concurrently, to allow for some additional prefetch while the Batch Saga dispatches more
+    /// </summary>
+    public int? ActiveThreshold { get; set; } = 20;
 
         public int? Total { get; set; }
 

@@ -10,7 +10,7 @@
 
         DateTime Timestamp { get; }
 
-        BatchAction Action { get; }
+        BatchActionEnum Action { get; }
 
         Guid[] OrderIds { get; }
 

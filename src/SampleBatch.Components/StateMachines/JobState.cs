@@ -20,7 +20,7 @@
 
         public DateTime? UpdateTimestamp { get; set; }
 
-        public BatchAction Action { get; set; }
+        public BatchActionEnum Action { get; set; }
 
         public string ExceptionMessage { get; set; }
 

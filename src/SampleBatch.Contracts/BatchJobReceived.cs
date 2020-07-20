@@ -10,6 +10,6 @@
         Guid BatchId { get; }
         Guid OrderId { get; }
         DateTime Timestamp { get; }
-        BatchAction Action { get; }
+        BatchActionEnum Action { get; }
     }
 }

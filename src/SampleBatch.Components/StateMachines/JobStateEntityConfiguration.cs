@@ -1,9 +1,9 @@
 ﻿namespace SampleBatch.Components.StateMachines
 {
+    using System.Linq;
     using Contracts.Enums;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
-    using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 
     class JobStateEntityConfiguration :
@@ -19,8 +19,8 @@
 
             builder.Property(c => c.CurrentState).IsRequired();
 
-            builder.Property(c => c.Action)
-                .HasConversion(new EnumToStringConverter<BatchAction>());
+            builder.Property(p => p.Action)
+                .HasConversion(v => v.Value, i => BatchActionEnum.List().FirstOrDefault(e => e.Value == i));
         }
     }
 }

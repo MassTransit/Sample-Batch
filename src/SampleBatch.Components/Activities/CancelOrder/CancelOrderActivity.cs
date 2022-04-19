@@ -2,15 +2,14 @@
 {
     using System;
     using System.Threading.Tasks;
-    using MassTransit.Courier;
-    using MassTransit.Courier.Exceptions;
+    using MassTransit;
     using Microsoft.Extensions.Logging;
 
 
     public class CancelOrderActivity :
         IExecuteActivity<CancelOrderArguments>
     {
-        private readonly SampleBatchDbContext _dbContext;
+        readonly SampleBatchDbContext _dbContext;
         readonly ILogger _logger;
 
         public CancelOrderActivity(SampleBatchDbContext dbContext, ILoggerFactory loggerFactory)

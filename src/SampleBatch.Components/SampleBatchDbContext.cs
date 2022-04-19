@@ -20,6 +20,6 @@ namespace SampleBatch.Components
         }
 
         public DbSet<BatchState> BatchStates { get; set; }
-        public DbSet<JobState> JobStates { get; set; }
+        public DbSet<BatchJobState> JobStates { get; set; }
     }
 }

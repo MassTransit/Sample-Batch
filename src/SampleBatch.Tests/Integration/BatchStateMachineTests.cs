@@ -16,6 +16,9 @@ using Xunit;
 
 namespace SampleBatch.Tests.Integration
 {
+    using MassTransit.EntityFrameworkCoreIntegration;
+
+
     /// <summary>
     /// Integration Tests I like to test more end to end scenarios. This still uses in-memory for all the message broker bits, but instead it uses MsSql for the persistence
     /// </summary>
@@ -76,7 +79,7 @@ namespace SampleBatch.Tests.Integration
         [Fact]
         public async Task should_complete_successfully()
         {
-            var message = await MessageInitializerCache<BatchReceived>.InitializeMessage(
+            var (message, _) = await MessageInitializerCache<BatchReceived>.InitializeMessage(
                 new
                 {
                     BatchId = NewId.NextGuid(),

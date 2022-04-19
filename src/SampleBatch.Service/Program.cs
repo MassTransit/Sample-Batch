@@ -10,12 +10,12 @@
     using Components.StateMachines;
     using Contracts;
     using MassTransit;
-    using MassTransit.EntityFrameworkCoreIntegration;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
+
 
     class Program
     {
@@ -58,7 +58,7 @@
                                     new CustomSqlLockStatementProvider("select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchId = @p0");
                             });
 
-                        cfg.AddSagaStateMachine<JobStateMachine, JobState>(typeof(JobStateMachineDefinition))
+                        cfg.AddSagaStateMachine<BatchJobStateMachine, BatchJobState, JobStateMachineDefinition>()
                             .EntityFrameworkRepository(r =>
                             {
                                 r.ConcurrencyMode = ConcurrencyMode.Pessimistic;
@@ -110,9 +110,7 @@
                             });
                         }
                         else
-                        {
                             throw new ApplicationException("Invalid Bus configuration. Couldn't find Azure or RabbitMq config");
-                        }
                     });
 
                     services.AddDbContext<SampleBatchDbContext>(x => x.UseSqlServer(hostContext.Configuration.GetConnectionString("sample-batch")));

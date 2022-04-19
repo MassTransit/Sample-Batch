@@ -1,11 +1,11 @@
 ﻿namespace SampleBatch.Components.StateMachines
 {
     using System;
-    using Automatonymous;
     using Contracts.Enums;
+    using MassTransit;
 
 
-    public class JobState :
+    public class BatchJobState :
         SagaStateMachineInstance
     {
         public Guid BatchId { get; set; }

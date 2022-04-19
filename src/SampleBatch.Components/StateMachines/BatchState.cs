@@ -2,15 +2,13 @@
 {
     using System;
     using System.Collections.Generic;
-    using Automatonymous;
     using Contracts.Enums;
+    using MassTransit;
 
 
     public class BatchState :
         SagaStateMachineInstance
     {
-        public Guid CorrelationId { get; set; }
-
         public string CurrentState { get; set; }
 
         public DateTime? ReceiveTimestamp { get; set; }
@@ -35,6 +33,7 @@
         public Dictionary<Guid, Guid> ProcessingOrderIds { get; set; } = new Dictionary<Guid, Guid>(); // CorrelationId, OrderId
 
         // Navigation Properties
-        public List<JobState> Jobs { get; set; } = new List<JobState>();
+        public List<BatchJobState> Jobs { get; set; } = new List<BatchJobState>();
+        public Guid CorrelationId { get; set; }
     }
 }

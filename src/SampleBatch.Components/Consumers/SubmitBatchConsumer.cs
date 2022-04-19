@@ -3,7 +3,6 @@
     using System.Threading.Tasks;
     using Contracts;
     using MassTransit;
-    using MassTransit.Definition;
     using Microsoft.Extensions.Logging;
 
 
@@ -66,14 +65,6 @@
         public SubmitBatchConsumerDefinition()
         {
             ConcurrentMessageLimit = 10;
-
-            Request<SubmitBatch>(x =>
-            {
-                x.Responds<BatchRejected>();
-                x.Responds<BatchSubmitted>();
-
-                x.Publishes<BatchReceived>();
-            });
         }
     }
 }

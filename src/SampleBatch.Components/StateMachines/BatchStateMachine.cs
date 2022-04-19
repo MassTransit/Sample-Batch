@@ -4,11 +4,8 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using Automatonymous;
     using Contracts;
-    using GreenPipes;
     using MassTransit;
-    using MassTransit.Definition;
 
 
     public class BatchStateMachine :
@@ -93,7 +90,7 @@
                         InVar.Timestamp,
                         ProcessingJobCount = x.Instance.ProcessingOrderIds.Count,
                         UnprocessedJobCount = x.Instance.UnprocessedOrderIds.Count,
-                        State = (await this.GetState(x.Instance)).Name
+                        State = (await this.GetState(x)).Name
                     })),
                 When(BatchReceived)
                     .Then(context => Touch(context.Instance, context.Data.Timestamp))

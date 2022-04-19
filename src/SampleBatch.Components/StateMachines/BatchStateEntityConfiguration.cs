@@ -2,8 +2,8 @@
 {
     using System;
     using System.Collections.Generic;
-    using Common;
     using Contracts.Enums;
+    using MassTransit.EntityFrameworkCoreIntegration;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.EntityFrameworkCore.Metadata.Builders;
     using Microsoft.EntityFrameworkCore.Storage.ValueConversion;

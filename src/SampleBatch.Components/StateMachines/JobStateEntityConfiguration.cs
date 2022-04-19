@@ -7,9 +7,9 @@
 
 
     class JobStateEntityConfiguration :
-        IEntityTypeConfiguration<JobState>
+        IEntityTypeConfiguration<BatchJobState>
     {
-        public void Configure(EntityTypeBuilder<JobState> builder)
+        public void Configure(EntityTypeBuilder<BatchJobState> builder)
         {
             builder.HasKey(c => c.CorrelationId);
 

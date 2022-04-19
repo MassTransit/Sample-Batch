@@ -1,18 +1,14 @@
 ﻿namespace SampleBatch.Components.StateMachines
 {
     using System;
-    using System.Threading.Tasks;
-    using Automatonymous;
     using Contracts;
-    using GreenPipes;
     using MassTransit;
-    using MassTransit.Definition;
 
 
-    public class JobStateMachine :
-        MassTransitStateMachine<JobState>
+    public class BatchJobStateMachine :
+        MassTransitStateMachine<BatchJobState>
     {
-        public JobStateMachine()
+        public BatchJobStateMachine()
         {
             InstanceState(x => x.CurrentState);
 
@@ -25,7 +21,14 @@
                     .Then(context => Touch(context.Instance, context.Data.Timestamp))
                     .Then(context => SetReceiveTimestamp(context.Instance, context.Data.Timestamp))
                     .Then(Initialize)
-                    .ThenAsync(InitiateProcessing)
+                    .Send(context => context.Init<ProcessBatchJob>(new
+                    {
+                        BatchJobId = context.Instance.CorrelationId,
+                        Timestamp = DateTime.UtcNow,
+                        context.Instance.BatchId,
+                        context.Instance.OrderId,
+                        context.Instance.Action
+                    }))
                     .TransitionTo(Received));
 
             During(Received,
@@ -58,7 +61,7 @@
         public Event<BatchJobFailed> BatchJobFailed { get; private set; }
         public Event<BatchJobCompleted> BatchJobCompleted { get; private set; }
 
-        static void Touch(JobState state, DateTime timestamp)
+        static void Touch(BatchJobState state, DateTime timestamp)
         {
             state.CreateTimestamp ??= timestamp;
 
@@ -66,47 +69,35 @@
                 state.UpdateTimestamp = timestamp;
         }
 
-        static void SetReceiveTimestamp(JobState state, DateTime timestamp)
+        static void SetReceiveTimestamp(BatchJobState state, DateTime timestamp)
         {
             if (!state.ReceiveTimestamp.HasValue || state.ReceiveTimestamp.Value > timestamp)
                 state.ReceiveTimestamp = timestamp;
         }
 
-        static void Initialize(BehaviorContext<JobState, BatchJobReceived> context)
+        static void Initialize(BehaviorContext<BatchJobState, BatchJobReceived> context)
         {
             InitializeInstance(context.Instance, context.Data);
         }
 
-        static void InitializeInstance(JobState instance, BatchJobReceived data)
+        static void InitializeInstance(BatchJobState instance, BatchJobReceived data)
         {
             instance.Action = data.Action;
             instance.OrderId = data.OrderId;
             instance.BatchId = data.BatchId;
         }
-
-        static async Task InitiateProcessing(BehaviorContext<JobState, BatchJobReceived> context)
-        {
-            await context.Send<JobState, BatchJobReceived, ProcessBatchJob>(new
-            {
-                BatchJobId = context.Instance.CorrelationId,
-                Timestamp = DateTime.UtcNow,
-                context.Instance.BatchId,
-                context.Instance.OrderId,
-                context.Instance.Action
-            });
-        }
     }
 
 
     public class JobStateMachineDefinition :
-        SagaDefinition<JobState>
+        SagaDefinition<BatchJobState>
     {
         public JobStateMachineDefinition()
         {
             ConcurrentMessageLimit = 8;
         }
 
-        protected override void ConfigureSaga(IReceiveEndpointConfigurator endpointConfigurator, ISagaConfigurator<JobState> sagaConfigurator)
+        protected override void ConfigureSaga(IReceiveEndpointConfigurator endpointConfigurator, ISagaConfigurator<BatchJobState> sagaConfigurator)
         {
             sagaConfigurator.UseMessageRetry(r => r.Immediate(5));
             sagaConfigurator.UseInMemoryOutbox();

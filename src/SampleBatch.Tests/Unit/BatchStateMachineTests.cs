@@ -54,7 +54,7 @@ namespace SampleBatch.Tests.Unit
         [Fact]
         public async Task should_start()
         {
-            var message = await MessageInitializerCache<BatchReceived>.InitializeMessage(
+            var (message, _) = await MessageInitializerCache<BatchReceived>.InitializeMessage(
                 new
                 {
                     BatchId = NewId.NextGuid(),
@@ -82,7 +82,7 @@ namespace SampleBatch.Tests.Unit
         [Fact]
         public async Task should_receive_and_wait()
         {
-            var message = await MessageInitializerCache<BatchReceived>.InitializeMessage(
+            var (message, _) = await MessageInitializerCache<BatchReceived>.InitializeMessage(
                 new
                 {
                     BatchId = NewId.NextGuid(),

@@ -1,11 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using SampleBatch.Components.StateMachines;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SampleBatch.Components
+﻿namespace SampleBatch.Components
 {
+    using Microsoft.EntityFrameworkCore;
+    using StateMachines;
+
+
     public class SampleBatchDbContext : DbContext
     {
         public SampleBatchDbContext(DbContextOptions options)
@@ -13,13 +11,13 @@ namespace SampleBatch.Components
         {
         }
 
+        public DbSet<BatchState> BatchStates { get; set; }
+        public DbSet<BatchJobState> JobStates { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new BatchStateEntityConfiguration());
             modelBuilder.ApplyConfiguration(new JobStateEntityConfiguration());
         }
-
-        public DbSet<BatchState> BatchStates { get; set; }
-        public DbSet<BatchJobState> JobStates { get; set; }
     }
 }

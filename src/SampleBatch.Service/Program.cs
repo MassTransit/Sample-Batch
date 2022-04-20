@@ -115,8 +115,6 @@
 
                     services.AddDbContext<SampleBatchDbContext>(x => x.UseSqlServer(hostContext.Configuration.GetConnectionString("sample-batch")));
 
-                    services.AddHostedService<MassTransitConsoleHostedService>();
-
                     // So we don't need to use ef migrations for this sample.
                     // Likely if you are going to deploy to a production environment, you want a better DB deploy strategy.
                     services.AddHostedService<EfDbCreatedHostedService>();

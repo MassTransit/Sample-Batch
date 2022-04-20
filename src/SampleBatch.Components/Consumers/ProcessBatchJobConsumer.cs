@@ -5,7 +5,6 @@
     using Contracts;
     using Contracts.Enums;
     using MassTransit;
-    using MassTransit.Courier;
     using MassTransit.Courier.Contracts;
     using Microsoft.Extensions.Logging;
 
@@ -55,7 +54,7 @@
                         builder.AddActivity(
                             "SuspendOrder",
                             new Uri("queue:suspend-order_execute"),
-                            new {context.Message.OrderId});
+                            new { context.Message.OrderId });
 
                         await builder.AddSubscription(
                             context.SourceAddress,

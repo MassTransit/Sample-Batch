@@ -9,7 +9,7 @@
     public class SuspendOrderActivity :
         IExecuteActivity<SuspendOrderArguments>
     {
-        private readonly SampleBatchDbContext _dbContext;
+        readonly SampleBatchDbContext _dbContext;
         readonly ILogger _logger;
 
         public SuspendOrderActivity(SampleBatchDbContext dbContext, ILoggerFactory loggerFactory)

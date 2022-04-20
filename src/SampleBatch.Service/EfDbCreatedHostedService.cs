@@ -1,13 +1,13 @@
-﻿using MassTransit;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace SampleBatch.Service
+﻿namespace SampleBatch.Service
 {
+    using System;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Hosting;
+
+
     public class EfDbCreatedHostedService :
         IHostedService
     {

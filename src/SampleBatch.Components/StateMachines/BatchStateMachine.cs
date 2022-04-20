@@ -35,19 +35,19 @@
 
             Initially(
                 When(BatchReceived)
-                    .Then(context => Touch(context.Instance, context.Data.Timestamp))
-                    .Then(context => SetReceiveTimestamp(context.Instance, context.Data.Timestamp))
+                    .Then(context => Touch(context.Saga, context.Message.Timestamp))
+                    .Then(context => SetReceiveTimestamp(context.Saga, context.Message.Timestamp))
                     .Then(Initialize)
-                    .IfElse(context => context.Data.DelayInSeconds.HasValue,
+                    .IfElse(context => context.Message.DelayInSeconds.HasValue,
                         thenBinder => thenBinder
-                            .Schedule(StartBatch, context => context.Init<StartBatch>(new {BatchId = context.Instance.CorrelationId}),
-                                context => TimeSpan.FromSeconds(context.Data.DelayInSeconds.Value))
+                            .Schedule(StartBatch, context => context.Init<StartBatch>(new { BatchId = context.Saga.CorrelationId }),
+                                context => TimeSpan.FromSeconds(context.Message.DelayInSeconds.Value))
                             .TransitionTo(Received),
                         elseBinder => elseBinder
                             .ThenAsync(DispatchJobs)
                             .TransitionTo(Started)),
                 When(CancelBatch)
-                    .Then(context => Touch(context.Instance, context.Data.Timestamp))
+                    .Then(context => Touch(context.Saga, context.Message.Timestamp))
                     .TransitionTo(Finished));
 
             During(Received,
@@ -55,29 +55,29 @@
                     .ThenAsync(DispatchJobs)
                     .TransitionTo(Started),
                 When(CancelBatch)
-                    .Then(context => Touch(context.Instance, context.Data.Timestamp))
+                    .Then(context => Touch(context.Saga, context.Message.Timestamp))
                     .Unschedule(StartBatch)
                     .TransitionTo(Finished));
 
             During(Started,
                 When(BatchJobDone)
-                    .Then(context => Touch(context.Instance, context.Data.Timestamp))
+                    .Then(context => Touch(context.Saga, context.Message.Timestamp))
                     .Then(FinalizeJob)
-                    .IfElse(context => context.Instance.UnprocessedOrderIds.Count == 0 && context.Instance.ProcessingOrderIds.Count == 0,
+                    .IfElse(context => context.Saga.UnprocessedOrderIds.Count == 0 && context.Saga.ProcessingOrderIds.Count == 0,
                         binder => binder
                             .TransitionTo(Finished),
                         binder => binder
                             .ThenAsync(DispatchJobs)),
                 When(CancelBatch)
-                    .Then(context => Touch(context.Instance, context.Data.Timestamp))
+                    .Then(context => Touch(context.Saga, context.Message.Timestamp))
                     .TransitionTo(Cancelling));
 
             // We continue receiving Job Done events, but don't Dispatch any new jobs
             During(Cancelling,
                 When(BatchJobDone)
-                    .Then(context => Touch(context.Instance, context.Data.Timestamp))
+                    .Then(context => Touch(context.Saga, context.Message.Timestamp))
                     .Then(FinalizeJob)
-                    .If(context => context.Instance.ProcessingOrderIds.Count == 0,
+                    .If(context => context.Saga.ProcessingOrderIds.Count == 0,
                         binder => binder.TransitionTo(Finished)));
 
             During(Finished, Ignore(CancelBatch));
@@ -86,15 +86,15 @@
                 When(StateRequested)
                     .RespondAsync(async x => await x.Init<BatchStatus>(new
                     {
-                        BatchId = x.Instance.CorrelationId,
+                        BatchId = x.Saga.CorrelationId,
                         InVar.Timestamp,
-                        ProcessingJobCount = x.Instance.ProcessingOrderIds.Count,
-                        UnprocessedJobCount = x.Instance.UnprocessedOrderIds.Count,
-                        State = (await this.GetState(x)).Name
+                        ProcessingJobCount = x.Saga.ProcessingOrderIds.Count,
+                        UnprocessedJobCount = x.Saga.UnprocessedOrderIds.Count,
+                        State = this.GetState(x)
                     })),
                 When(BatchReceived)
-                    .Then(context => Touch(context.Instance, context.Data.Timestamp))
-                    .Then(context => SetReceiveTimestamp(context.Instance, context.Data.Timestamp))
+                    .Then(context => Touch(context.Saga, context.Message.Timestamp))
+                    .Then(context => SetReceiveTimestamp(context.Saga, context.Message.Timestamp))
                     .Then(Initialize));
         }
 
@@ -126,7 +126,7 @@
 
         static void Initialize(BehaviorContext<BatchState, BatchReceived> context)
         {
-            InitializeInstance(context.Instance, context.Data);
+            InitializeInstance(context.Saga, context.Message);
         }
 
         static void InitializeInstance(BatchState instance, BatchReceived data)
@@ -141,31 +141,31 @@
         {
             var jobsToSend = new List<Task>();
 
-            while (context.Instance.UnprocessedOrderIds.Any()
-                && context.Instance.ProcessingOrderIds.Count < context.Instance.ActiveThreshold)
+            while (context.Saga.UnprocessedOrderIds.Any()
+                   && context.Saga.ProcessingOrderIds.Count < context.Saga.ActiveThreshold)
                 jobsToSend.Add(InitiateJob(context));
 
             await Task.WhenAll(jobsToSend);
         }
 
-        static Task InitiateJob(BehaviorContext<BatchState> context)
+        static Task InitiateJob(SagaConsumeContext<BatchState> context)
         {
-            var orderId = context.Instance.UnprocessedOrderIds.Pop();
+            var orderId = context.Saga.UnprocessedOrderIds.Pop();
             var batchJobId = NewId.NextGuid();
-            context.Instance.ProcessingOrderIds.Add(batchJobId, orderId);
-            return context.GetPayload<ConsumeContext>().Publish<BatchJobReceived>(new
+            context.Saga.ProcessingOrderIds.Add(batchJobId, orderId);
+            return context.Publish<BatchJobReceived>(new
             {
                 BatchJobId = batchJobId,
                 InVar.Timestamp,
-                BatchId = context.Instance.CorrelationId,
+                BatchId = context.Saga.CorrelationId,
                 OrderId = orderId,
-                context.Instance.Action
+                context.Saga.Action
             });
         }
 
         static void FinalizeJob(BehaviorContext<BatchState, BatchJobDone> context)
         {
-            context.Instance.ProcessingOrderIds.Remove(context.Data.BatchJobId);
+            context.Saga.ProcessingOrderIds.Remove(context.Message.BatchJobId);
         }
     }
 

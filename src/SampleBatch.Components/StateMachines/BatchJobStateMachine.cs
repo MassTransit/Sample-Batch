@@ -18,36 +18,36 @@
 
             Initially(
                 When(BatchJobReceived)
-                    .Then(context => Touch(context.Instance, context.Data.Timestamp))
-                    .Then(context => SetReceiveTimestamp(context.Instance, context.Data.Timestamp))
+                    .Then(context => Touch(context.Saga, context.Message.Timestamp))
+                    .Then(context => SetReceiveTimestamp(context.Saga, context.Message.Timestamp))
                     .Then(Initialize)
                     .Send(context => context.Init<ProcessBatchJob>(new
                     {
-                        BatchJobId = context.Instance.CorrelationId,
-                        Timestamp = DateTime.UtcNow,
-                        context.Instance.BatchId,
-                        context.Instance.OrderId,
-                        context.Instance.Action
+                        BatchJobId = context.Saga.CorrelationId,
+                        InVar.Timestamp,
+                        context.Saga.BatchId,
+                        context.Saga.OrderId,
+                        context.Saga.Action
                     }))
                     .TransitionTo(Received));
 
             During(Received,
                 When(BatchJobCompleted)
-                    .Then(context => Touch(context.Instance, context.Data.Timestamp))
+                    .Then(context => Touch(context.Saga, context.Message.Timestamp))
                     .PublishAsync(context => context.Init<BatchJobDone>(new
                     {
-                        BatchJobId = context.Instance.CorrelationId,
-                        context.Instance.BatchId,
+                        BatchJobId = context.Saga.CorrelationId,
+                        context.Saga.BatchId,
                         InVar.Timestamp
                     }))
                     .TransitionTo(Completed),
                 When(BatchJobFailed)
-                    .Then(context => Touch(context.Instance, context.Data.Timestamp))
-                    .Then(context => context.Instance.ExceptionMessage = context.Data.ExceptionInfo.Message)
+                    .Then(context => Touch(context.Saga, context.Message.Timestamp))
+                    .Then(context => context.Saga.ExceptionMessage = context.Message.ExceptionInfo.Message)
                     .PublishAsync(context => context.Init<BatchJobDone>(new
                     {
-                        BatchJobId = context.Instance.CorrelationId,
-                        context.Instance.BatchId,
+                        BatchJobId = context.Saga.CorrelationId,
+                        context.Saga.BatchId,
                         InVar.Timestamp
                     }))
                     .TransitionTo(Failed));
@@ -77,7 +77,7 @@
 
         static void Initialize(BehaviorContext<BatchJobState, BatchJobReceived> context)
         {
-            InitializeInstance(context.Instance, context.Data);
+            InitializeInstance(context.Saga, context.Message);
         }
 
         static void InitializeInstance(BatchJobState instance, BatchJobReceived data)

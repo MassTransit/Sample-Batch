@@ -60,12 +60,8 @@
                     });
                 }
                 else
-                {
                     throw new ApplicationException("Invalid Bus configuration. Couldn't find Azure or RabbitMq config");
-                }
             });
-
-            services.AddMassTransitHostedService();
 
             services.AddOpenApiDocument(cfg => cfg.PostProcess = d => d.Info.Title = "Sample-Batch");
 
@@ -86,7 +82,7 @@
             app.UseOpenApi(); // serve OpenAPI/Swagger documents
             app.UseSwaggerUi3(); // serve Swagger UI
 
-            app.UseHealthChecks("/health", new HealthCheckOptions {Predicate = check => check.Tags.Contains("ready")});
+            app.UseHealthChecks("/health", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 
             app.UseEndpoints(endpoints =>
             {
@@ -96,7 +92,7 @@
             lifetime.ApplicationStarted.Register(() =>
             {
                 var currentTimeUtc = DateTime.UtcNow.ToString(CultureInfo.InvariantCulture);
-                byte[] encodedCurrentTimeUtc = Encoding.UTF8.GetBytes(currentTimeUtc);
+                var encodedCurrentTimeUtc = Encoding.UTF8.GetBytes(currentTimeUtc);
                 var options = new DistributedCacheEntryOptions()
                     .SetSlidingExpiration(TimeSpan.FromSeconds(60));
                 cache.Set("cachedTimeUTC", encodedCurrentTimeUtc, options);

@@ -83,9 +83,6 @@
                             {
                                 y.Host(appConfig.AzureServiceBus.ConnectionString);
 
-                                var endpointNameFormatter = x.GetRequiredService<IEndpointNameFormatter>();
-                                EndpointConvention.Map<ProcessBatchJob>(new Uri($"queue:{endpointNameFormatter.Consumer<ProcessBatchJobConsumer>()}"));
-
                                 y.UseServiceBusMessageScheduler();
 
                                 y.ConfigureEndpoints(x);
@@ -100,9 +97,6 @@
                                     h.Username(appConfig.RabbitMq.Username);
                                     h.Password(appConfig.RabbitMq.Password);
                                 });
-
-                                var endpointNameFormatter = x.GetRequiredService<IEndpointNameFormatter>();
-                                EndpointConvention.Map<ProcessBatchJob>(new Uri($"queue:{endpointNameFormatter.Consumer<ProcessBatchJobConsumer>()}"));
 
                                 y.UseInMemoryScheduler();
 

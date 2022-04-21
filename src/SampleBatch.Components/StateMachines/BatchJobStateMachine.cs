@@ -21,7 +21,7 @@
                     .Then(context => Touch(context.Saga, context.Message.Timestamp))
                     .Then(context => SetReceiveTimestamp(context.Saga, context.Message.Timestamp))
                     .Then(Initialize)
-                    .Send(context => context.Init<ProcessBatchJob>(new
+                    .PublishAsync(context => context.Init<ProcessBatchJob>(new
                     {
                         BatchJobId = context.Saga.CorrelationId,
                         InVar.Timestamp,

@@ -10,11 +10,12 @@ services:
   mssql:
     container_name: dev-mssql
     hostname: mssql
-    image: mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+    image: mcr.microsoft.com/azure-sql-edge:latest
     ports:
      - "1433:1433"
     environment:
       SA_PASSWORD: "MTsample1"
+      MSSQL_PID: "Developer"
       ACCEPT_EULA: "Y"
   redis:
     image: redis

@@ -59,7 +59,7 @@ namespace SampleBatch.Tests.Unit
                 {
                     BatchId = NewId.NextGuid(),
                     Timestamp = DateTime.UtcNow,
-                    BatchAction = BatchAction.CancelOrders,
+                    Action = BatchAction.CancelOrders,
                     ActiveThreshold = 5,
                     OrderIds = new Guid[] { Guid.NewGuid(), Guid.NewGuid() }
                 });
@@ -87,7 +87,7 @@ namespace SampleBatch.Tests.Unit
                 {
                     BatchId = NewId.NextGuid(),
                     Timestamp = DateTime.UtcNow,
-                    BatchAction = BatchAction.CancelOrders,
+                    Action = BatchAction.CancelOrders,
                     ActiveThreshold = 5,
                     OrderIds = new Guid[] { Guid.NewGuid(), Guid.NewGuid() },
                     DelayInSeconds = 60

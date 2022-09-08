@@ -47,7 +47,7 @@ namespace SampleBatch.Tests.Integration
                 db.Database.EnsureCreated();
             }
 
-            _sagaRepository = EntityFrameworkSagaRepository<BatchState>.CreatePessimistic(_dbContextFactory, new CustomSqlLockStatementProvider("select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchId = @p0"));
+            _sagaRepository = EntityFrameworkSagaRepository<BatchState>.CreatePessimistic(_dbContextFactory, new CustomSqlLockStatementProvider());
             _stateMachine = new BatchStateMachine();
 
             _inMemoryTestHarness = new InMemoryTestHarness();

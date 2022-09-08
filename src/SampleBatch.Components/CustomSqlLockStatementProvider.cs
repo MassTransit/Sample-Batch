@@ -7,8 +7,8 @@ namespace SampleBatch.Components
     {
         const string DefaultSchemaName = "dbo";
 
-        public CustomSqlLockStatementProvider(string lockStatement)
-            : base(DefaultSchemaName, lockStatement)
+        public CustomSqlLockStatementProvider()
+            : base(DefaultSchemaName, new CustomSqlLockStatementFormatter())
         {
         }
     }

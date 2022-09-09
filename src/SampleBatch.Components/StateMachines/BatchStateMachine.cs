@@ -90,7 +90,7 @@
                         InVar.Timestamp,
                         ProcessingJobCount = x.Saga.ProcessingOrderIds.Count,
                         UnprocessedJobCount = x.Saga.UnprocessedOrderIds.Count,
-                        State = this.GetState(x).ToString()
+                        State = (await this.GetState(x)).ToString()
                     })),
                 When(BatchReceived)
                     .Then(context => Touch(context.Saga, context.Message.Timestamp))

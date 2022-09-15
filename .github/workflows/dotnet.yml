@@ -1,0 +1,31 @@
+name: .NET
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2017-latest
+        env:
+          ACCEPT_EULA: Y
+          SA_PASSWORD: "MTsample1"
+        ports:
+          - 1433:1433
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 6.0.x
+    - name: Restore dependencies
+      run: dotnet restore ./src/Sample-Batch.sln
+    - name: Build
+      run: dotnet build ./src/Sample-Batch.sln --configuration Release
+    - name: Test
+      run: dotnet test ./src/Sample-Batch.sln --configuration Release --no-build --verbosity normal

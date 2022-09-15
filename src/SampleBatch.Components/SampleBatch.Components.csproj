@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MassTransit.Analyzers" Version="8.0.1" />
-    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="8.0.1" />
+    <PackageReference Include="MassTransit.Analyzers" Version="8.0.6" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="8.0.6" />
   </ItemGroup>
 
   <ItemGroup>

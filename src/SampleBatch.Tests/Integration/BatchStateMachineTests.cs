@@ -47,7 +47,7 @@ namespace SampleBatch.Tests.Integration
                 db.Database.EnsureCreated();
             }
 
-            _sagaRepository = EntityFrameworkSagaRepository<BatchState>.CreatePessimistic(_dbContextFactory, new CustomSqlLockStatementProvider("select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchId = @p0"));
+            _sagaRepository = EntityFrameworkSagaRepository<BatchState>.CreatePessimistic(_dbContextFactory, new CustomSqlLockStatementProvider());
             _stateMachine = new BatchStateMachine();
 
             _inMemoryTestHarness = new InMemoryTestHarness();
@@ -84,7 +84,7 @@ namespace SampleBatch.Tests.Integration
                 {
                     BatchId = NewId.NextGuid(),
                     Timestamp = DateTime.UtcNow,
-                    BatchAction = BatchAction.CancelOrders,
+                    Action = BatchAction.CancelOrders,
                     ActiveThreshold = 5,
                     OrderIds = new Guid[] { Guid.NewGuid(), Guid.NewGuid() }
                 });
@@ -102,14 +102,14 @@ namespace SampleBatch.Tests.Integration
             var job1 = _inMemoryConsumerHarness.Consumed.Select<BatchJobReceived>(x => x.Context.Message.OrderId == message.OrderIds[0]).First();
             var job2 = _inMemoryConsumerHarness.Consumed.Select<BatchJobReceived>(x => x.Context.Message.OrderId == message.OrderIds[1]).First();
 
-            var doneJob1 = await MessageInitializerCache<BatchJobDone>.InitializeMessage(
+            var (doneJob1, _) = await MessageInitializerCache<BatchJobDone>.InitializeMessage(
                 new
                 {
                     job1.Context.Message.BatchJobId,
                     job1.Context.Message.BatchId,
                     Timestamp = DateTime.UtcNow
                 });
-            var doneJob2 = await MessageInitializerCache<BatchJobDone>.InitializeMessage(
+            var (doneJob2, _) = await MessageInitializerCache<BatchJobDone>.InitializeMessage(
                 new
                 {
                     job2.Context.Message.BatchJobId,

@@ -55,7 +55,7 @@
                                 // I specified the MsSqlLockStatements because in my State Entities EFCore EntityConfigurations, I changed the column name from CorrelationId, to "BatchId" and "BatchJobId"
                                 // Otherwise, I could just use r.UseSqlServer(), which uses the default, which are "... WHERE CorrelationId = @p0"
                                 r.LockStatementProvider =
-                                    new CustomSqlLockStatementProvider("select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchId = @p0");
+                                    new CustomSqlLockStatementProvider();
                             });
 
                         cfg.AddSagaStateMachine<BatchJobStateMachine, BatchJobState, JobStateMachineDefinition>()
@@ -71,7 +71,7 @@
                                 // I specified the MsSqlLockStatements because in my State Entities EFCore EntityConfigurations, I changed the column name from CorrelationId, to "BatchId" and "BatchJobId"
                                 // Otherwise, I could just use r.UseSqlServer(), which uses the default, which are "... WHERE CorrelationId = @p0"
                                 r.LockStatementProvider =
-                                    new CustomSqlLockStatementProvider("select * from {0}.{1} WITH (UPDLOCK, ROWLOCK) WHERE BatchJobId = @p0");
+                                    new CustomSqlLockStatementProvider();
                             });
 
                         cfg.AddConsumersFromNamespaceContaining<ConsumerAnchor>();

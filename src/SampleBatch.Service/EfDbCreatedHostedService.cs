@@ -3,10 +3,9 @@
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
-
+    using SampleBatch.Components;
 
     public class EfDbCreatedHostedService :
         IHostedService
@@ -22,7 +21,7 @@
         {
             using (var scope = _serviceProvider.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<DbContext>();
+                var db = scope.ServiceProvider.GetRequiredService<SampleBatchDbContext>();
 
                 db.Database.EnsureCreated();
             }

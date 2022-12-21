@@ -19,33 +19,15 @@ namespace SampleBatch.Api.Controllers
         readonly IRequestClient<SubmitBatch> _submitBatchClient;
         readonly IRequestClient<BatchStatusRequested> _batchStatusClient;
         readonly IPublishEndpoint _publishEndpoint;
-        private readonly IDistributedCache _cache;
 
         public BatchJobsController(
             IRequestClient<SubmitBatch> submitBatchClient,
             IRequestClient<BatchStatusRequested> batchStatusClient,
-            IPublishEndpoint publishEndpoint,
-            IDistributedCache cache)
+            IPublishEndpoint publishEndpoint)
         {
             _submitBatchClient = submitBatchClient;
             _batchStatusClient = batchStatusClient;
             _publishEndpoint = publishEndpoint;
-            _cache = cache;
-        }
-
-        // GET api/batchjobs
-        [HttpGet(Name = "Get")]
-        public async Task<IActionResult> Get()
-        {
-            var CachedTimeUTC = "Cached Time Expired";
-            var encodedCachedTimeUTC = await _cache.GetAsync("cachedTimeUTC");
-
-            if (encodedCachedTimeUTC != null)
-            {
-                CachedTimeUTC = Encoding.UTF8.GetString(encodedCachedTimeUTC);
-            }
-            // Can query the DB within the API project, or move the query into a consumer, and use MT Req/Response
-            return Ok();
         }
 
         // GET api/batchjobs/5

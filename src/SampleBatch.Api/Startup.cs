@@ -64,15 +64,10 @@
             });
 
             services.AddOpenApiDocument(cfg => cfg.PostProcess = d => d.Info.Title = "Sample-Batch");
-
-            services.AddStackExchangeRedisCache(options =>
-            {
-                options.Configuration = "localhost";
-            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime lifetime, IDistributedCache cache)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime lifetime)
         {
             if (env.IsDevelopment())
                 app.UseDeveloperExceptionPage();
@@ -87,15 +82,6 @@
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-            });
-
-            lifetime.ApplicationStarted.Register(() =>
-            {
-                var currentTimeUtc = DateTime.UtcNow.ToString(CultureInfo.InvariantCulture);
-                var encodedCurrentTimeUtc = Encoding.UTF8.GetBytes(currentTimeUtc);
-                var options = new DistributedCacheEntryOptions()
-                    .SetSlidingExpiration(TimeSpan.FromSeconds(60));
-                cache.Set("cachedTimeUTC", encodedCurrentTimeUtc, options);
             });
         }
     }

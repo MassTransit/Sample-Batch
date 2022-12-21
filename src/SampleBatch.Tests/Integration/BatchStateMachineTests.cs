@@ -47,7 +47,7 @@ namespace SampleBatch.Tests.Integration
                 db.Database.EnsureCreated();
             }
 
-            _sagaRepository = EntityFrameworkSagaRepository<BatchState>.CreatePessimistic(_dbContextFactory, new CustomSqlLockStatementProvider());
+            _sagaRepository = EntityFrameworkSagaRepository<BatchState>.CreatePessimistic(_dbContextFactory);
             _stateMachine = new BatchStateMachine();
 
             _inMemoryTestHarness = new InMemoryTestHarness();

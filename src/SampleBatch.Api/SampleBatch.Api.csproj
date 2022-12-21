@@ -16,7 +16,6 @@
     <PackageReference Include="MassTransit.Analyzers" Version="8.0.6" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="8.0.6" />
     <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.0.6" />
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.8" />
     <PackageReference Include="NSwag.AspNetCore" Version="13.16.1" />
   </ItemGroup>
 

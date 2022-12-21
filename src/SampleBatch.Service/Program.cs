@@ -42,63 +42,45 @@
                     services.AddMassTransit(cfg =>
                     {
                         cfg.SetKebabCaseEndpointNameFormatter();
-                        cfg.AddSagaStateMachine<BatchStateMachine, BatchState>(typeof(BatchStateMachineDefinition))
-                            .EntityFrameworkRepository(r =>
-                            {
-                                r.ConcurrencyMode = ConcurrencyMode.Pessimistic;
 
-                                r.AddDbContext<DbContext, SampleBatchDbContext>((provider, optionsBuilder) =>
-                                {
-                                    optionsBuilder.UseSqlServer(hostContext.Configuration.GetConnectionString("sample-batch"));
-                                });
+                        cfg.SetEntityFrameworkSagaRepositoryProvider(r =>
+                        {
+                            r.ConcurrencyMode = ConcurrencyMode.Pessimistic;
 
-                                // I specified the MsSqlLockStatements because in my State Entities EFCore EntityConfigurations, I changed the column name from CorrelationId, to "BatchId" and "BatchJobId"
-                                // Otherwise, I could just use r.UseSqlServer(), which uses the default, which are "... WHERE CorrelationId = @p0"
-                                r.LockStatementProvider =
-                                    new CustomSqlLockStatementProvider();
-                            });
+                            r.ExistingDbContext<SampleBatchDbContext>();
 
-                        cfg.AddSagaStateMachine<BatchJobStateMachine, BatchJobState, JobStateMachineDefinition>()
-                            .EntityFrameworkRepository(r =>
-                            {
-                                r.ConcurrencyMode = ConcurrencyMode.Pessimistic;
-
-                                r.AddDbContext<DbContext, SampleBatchDbContext>((provider, optionsBuilder) =>
-                                {
-                                    optionsBuilder.UseSqlServer(hostContext.Configuration.GetConnectionString("sample-batch"));
-                                });
-
-                                // I specified the MsSqlLockStatements because in my State Entities EFCore EntityConfigurations, I changed the column name from CorrelationId, to "BatchId" and "BatchJobId"
-                                // Otherwise, I could just use r.UseSqlServer(), which uses the default, which are "... WHERE CorrelationId = @p0"
-                                r.LockStatementProvider =
-                                    new CustomSqlLockStatementProvider();
-                            });
+                            r.UseSqlServer();
+                        });
 
                         cfg.AddConsumersFromNamespaceContaining<ConsumerAnchor>();
                         cfg.AddActivitiesFromNamespaceContaining<ActivitiesAnchor>();
+                        cfg.AddSagasFromNamespaceContaining<StateMachineAnchor>();
+                        cfg.AddSagaStateMachinesFromNamespaceContaining<StateMachineAnchor>();
 
                         if (appConfig.AzureServiceBus != null)
                         {
+                            cfg.AddServiceBusMessageScheduler();
                             cfg.UsingAzureServiceBus((x, y) =>
                             {
-                                y.Host(appConfig.AzureServiceBus.ConnectionString);
-
                                 y.UseServiceBusMessageScheduler();
+                                
+                                y.Host(appConfig.AzureServiceBus.ConnectionString);
 
                                 y.ConfigureEndpoints(x);
                             });
                         }
                         else if (appConfig.RabbitMq != null)
                         {
+                            cfg.AddDelayedMessageScheduler();
                             cfg.UsingRabbitMq((x, y) =>
                             {
+                                y.UseDelayedMessageScheduler();
+
                                 y.Host(appConfig.RabbitMq.HostAddress, appConfig.RabbitMq.VirtualHost, h =>
                                 {
                                     h.Username(appConfig.RabbitMq.Username);
                                     h.Password(appConfig.RabbitMq.Password);
                                 });
-
-                                y.UseInMemoryScheduler();
 
                                 y.ConfigureEndpoints(x);
                             });
@@ -112,11 +94,6 @@
                     // So we don't need to use ef migrations for this sample.
                     // Likely if you are going to deploy to a production environment, you want a better DB deploy strategy.
                     services.AddHostedService<EfDbCreatedHostedService>();
-
-                    services.AddStackExchangeRedisCache(options =>
-                    {
-                        options.Configuration = "localhost";
-                    });
                 })
                 .ConfigureLogging((hostingContext, logging) =>
                 {

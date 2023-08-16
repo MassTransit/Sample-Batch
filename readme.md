@@ -3,6 +3,13 @@ Sample Batch
 
 This sample will show a variety of built in tools and techniques in MassTransit.
 
+Build Status
+------------
+
+Branch | Status
+--- | :---:
+master | [![master](https://github.com/MassTransit/Sample-Batch/actions/workflows/dotnet.yml/badge.svg?branch=master)](https://github.com/MassTransit/Sample-Batch/actions/workflows/dotnet.yml)
+
 ## Requirements ##
 
 A message broker, and a database, and dotnet core. This sample provides a docker-compose.yml which uses RabbitMq (broker) and MsSql (db). If you are on windows, and have (LocalDb), and rabbitMq locally installed, you can skip the first step, but you will need to change the "ConnectionStrings" in the SampleBatch.Service appsettings.json.

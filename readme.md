@@ -42,10 +42,9 @@ When you are all done, run `docker-compose down`
 
 My hope is to grow this sample over time, and introduce more documentation that walks through some of the decisions for example:
 
-- I didn't want the DB Entities to have CorrelationId, even though the MassTransit ISaga requires the property be called that. So I configured the entity to have a different name, but because I'm using pessimistic concurrency, I had to update the row lock statement.
+- I didn't want the DB Entities to have CorrelationId, even though the MassTransit ISaga requires the property be called that. Since MT v8, you no longer need to use a custom lock statement provider and formatter, because
+  MT will pass along the column name to the formatter. So if you want to re-name "CorrelationId" to something else, all you need to do is add the column name in the entity configuration.
 - I wanted to show, you can link state machines with children using SQL and Foreign Keys. This might not be the best design for your system. It all depends on the domain boundaries of your "microservice". It just shows one possibility, if you know your sagas are tightly coupled. In this sample, I want the user to be able to see a history of Batches that were ran and the status of the jobs it processed.
-- Perhaps grow the sample in the future with a simple UI, and wire in the SignalR Backplane for MassTransit, to show how you can really start to leverage real time alerts to users as things flow through the system.
 - The Sample allows RabbitMq or AzureSb to be used. All you do is add the config for the one you want, and on startup it will try to connect to the message broker that has config values present.
 - I'd like to perhaps expand the db to create an actual orderId entity, where the Cancel and Suspend Activities would actually use a DBContext and cancel them. Also maybe introduce a couple routing slip activities in sequence, to then show compensation.
 - Not too sure how I feel about the enum indicating what batch action to take, and then the switch statement in the ProcessJobConsumer where it conditionally creates the routingslip activity. Is there a more elegant way? I'll need to think about that.
-- I'd like to add quartz scheduler with persistence to the sample.

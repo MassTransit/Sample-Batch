@@ -3,22 +3,17 @@ services:
   rabbitmq:
     container_name: dev-rabbitmq
     hostname: rabbit
-    image: rabbitmq:3-management
+    image: masstransit/rabbitmq:latest
     ports:
      - "5672:5672"
      - "15672:15672"
   mssql:
     container_name: dev-mssql
     hostname: mssql
-    image: mcr.microsoft.com/azure-sql-edge:latest
+    image: mcr.microsoft.com/mssql/server:2022-latest
     ports:
      - "1433:1433"
     environment:
       SA_PASSWORD: "MTsample1"
       MSSQL_PID: "Developer"
       ACCEPT_EULA: "Y"
-  redis:
-    image: redis
-    container_name: cache
-    ports:
-      - "6379:6379"

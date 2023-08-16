@@ -39,6 +39,9 @@
                     var appConfig = hostContext.Configuration.GetSection(nameof(AppConfig)).Get<AppConfig>();
                     services.Configure<AppConfig>(options => hostContext.Configuration.GetSection("AppConfig").Bind(options));
 
+                    services.AddScoped<IRoutingSlipFactory, CancelOrdersRoutingSlipFactory>();
+                    services.AddScoped<IRoutingSlipFactory, SuspendOrdersRoutingSlipFactory>();
+
                     services.AddMassTransit(cfg =>
                     {
                         cfg.SetKebabCaseEndpointNameFormatter();

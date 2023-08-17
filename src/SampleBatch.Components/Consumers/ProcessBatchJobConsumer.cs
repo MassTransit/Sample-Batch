@@ -1,21 +1,21 @@
 ﻿namespace SampleBatch.Components.Consumers
 {
-    using System;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
+    using Activities;
     using Contracts;
-    using Contracts.Enums;
     using MassTransit;
-    using MassTransit.Courier.Contracts;
     using Microsoft.Extensions.Logging;
-
 
     public class ProcessBatchJobConsumer :
         IConsumer<ProcessBatchJob>
     {
         readonly ILogger<ProcessBatchJobConsumer> _log;
+        readonly IEnumerable<IRoutingSlipFactory> _factories;
 
-        public ProcessBatchJobConsumer(ILoggerFactory loggerFactory)
+        public ProcessBatchJobConsumer(ILoggerFactory loggerFactory, IEnumerable<IRoutingSlipFactory> factories)
         {
+            _factories = factories;
             _log = loggerFactory.CreateLogger<ProcessBatchJobConsumer>();
         }
 
@@ -23,63 +23,17 @@
         {
             using (_log.BeginScope("ProcessBatchJob {BatchJobId}, {OrderId}", context.Message.BatchJobId, context.Message.OrderId))
             {
-                var builder = new RoutingSlipBuilder(NewId.NextGuid());
-
-                switch (context.Message.Action)
+                foreach (var factory in _factories)
                 {
-                    case BatchAction.CancelOrders:
-                        builder.AddActivity(
-                            "CancelOrder",
-                            new Uri("queue:cancel-order_execute"),
-                            new
-                            {
-                                context.Message.OrderId,
-                                Reason = "Product discontinued"
-                            });
+                    if (factory.CanCreateSlipFrom(context))
+                    {
+                        var routingSlip = await factory.CreateSlip(context);
 
-                        await builder.AddSubscription(
-                            context.SourceAddress,
-                            RoutingSlipEvents.ActivityFaulted,
-                            RoutingSlipEventContents.None,
-                            "CancelOrder",
-                            x => x.Send<BatchJobFailed>(new
-                            {
-                                context.Message.BatchJobId,
-                                context.Message.BatchId,
-                                context.Message.OrderId
-                            }));
-                        break;
-
-                    case BatchAction.SuspendOrders:
-                        builder.AddActivity(
-                            "SuspendOrder",
-                            new Uri("queue:suspend-order_execute"),
-                            new { context.Message.OrderId });
-
-                        await builder.AddSubscription(
-                            context.SourceAddress,
-                            RoutingSlipEvents.ActivityFaulted,
-                            RoutingSlipEventContents.None,
-                            "SuspendOrder",
-                            x => x.Send<BatchJobFailed>(new
-                            {
-                                context.Message.BatchJobId,
-                                context.Message.BatchId,
-                                context.Message.OrderId
-                            }));
-                        break;
+                        await context.Execute(routingSlip);
+                    }
                 }
 
-                await builder.AddSubscription(
-                    context.SourceAddress,
-                    RoutingSlipEvents.Completed,
-                    x => x.Send<BatchJobCompleted>(new
-                    {
-                        context.Message.BatchJobId,
-                        context.Message.BatchId
-                    }));
-
-                await context.Execute(builder.Build());
+                _log.LogError("Couldn't handle unknown batch action {action}", context.Message.Action);
             }
         }
     }
